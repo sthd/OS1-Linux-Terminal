@@ -20,9 +20,13 @@ using namespace std;
 char* cmd;
 char* args[MAX_ARG];
 
-char* oldPwd = NULL; //assign * and nullptr
-char* tmpPwd = NULL;
-
+//char* oldPwd = NULL; //assign * and nullptr
+//char* tmpPwd = NULL;
+// You can initialize it the way your instructor suggested as you declare the array:
+char nextPwd[MAX_LINE_SIZE] ="";
+char oldPwd[MAX_LINE_SIZE] ="";
+char tmpPwd[MAX_LINE_SIZE] ="";
+char dash[] = "-";
 
 
 bool illegal_cmd = false; // illegal command
@@ -33,87 +37,74 @@ int i = 0;
 int num_arg = 0;
 
 
-void testPWD(char * cmd){
+int testPWD(char * cmd){
     if (!strcmp(cmd, "pwd")){
         if (num_arg != 0){
             perror("Too many parameters!\n");
-            illegal_cmd = true;
-        }
-        else{
-            char* current = getcwd(NULL, 0);
-            if (current == NULL){
-                perror("falied to retreive current working directory\n");
-                illegal_cmd = true;
-            }
-
-            else{
-               cout << current << endl;
-            }
+            return 1;
         }
         
-    }
+        char* current = getcwd(NULL, 0);
+        if (current == NULL){
+            perror("falied to retreive current working directory\n");
+            return 1;
+        }
+        cout << current << endl;
+        return 0;
+        }
+    return 0;
 }
 
 
-
-void testCd(char * cmd){
-    if (!strcmp(cmd, "cd") )
-    {
-        char dash[] = "-";
+    
+int testCd(char * cmd){
+    if (!strcmp(cmd, "cd") ){
         if (num_arg == 0){
             perror("Not enough parameters!\n");
-            illegal_cmd = true;
+            return 1;
         }
         else if(num_arg > 1){
             perror("Too many parameters!\n");
-            illegal_cmd = true;
+            return 1;
         }
-        
-        //0 if equal  //we change folder   cd -
-        else{
-            char nextPwd[MAX_LINE_SIZE];
-             if(!strcmp(args[1], dash)){ //enter if parameter is '-'
-                 if (oldPwd == NULL){
-                     perror("No such file or directory\n"); //do we need a \n
-                     illegal_cmd = true;
-                     return 1;
-                 }
-                 else{
-                     strcpy(nextPwd, oldPwd); //oldPwd isn't NULL
-                 }
-                 
-             } //finish if parameter is '-'
-             else{
-                 strcpy(nextPwd, args[1]);
-             }
-
-            strcpy(tmpPwd, getcwd(NULL, 0)); //tmpPwd <- current directory
-            if(chdir(nextPwd) == 0){
-                char* current = getcwd(NULL, 0);
-                cout << current << endl;
-                //strcpy(oldPwd, tmpPwd);
-                
+        if(!strcmp(args[1], dash)){  //enter if parameter is '-'
+            if (strlen(oldPwd) == 0){
+                perror("No such file or directory\n"); //do we need a \n
+                return 1;
             }
             else{
-                cerr << " \"" << nextPwd << "\" - No such file or directory\n" << endl;
+                strcpy(nextPwd, oldPwd); //oldPwd isn't NULL
             }
-
+        } //finish if parameter is '-'
+        else{
+            strcpy(nextPwd, args[1]);
         }
+        //nextPwd is either oldPwd or args[1]
+        
+        strcpy(tmpPwd, getcwd(NULL, 0)); //tmpPwd <- current directory
+        if(chdir(nextPwd) == -1){
+            cerr << " \"" << nextPwd << "\" - No such file or directory\n" << endl;
+            return 1;
+        }
+        char* current = getcwd(NULL, 0);
+        cout << current << endl;
+        strcpy(oldPwd, tmpPwd); //enter last cwd into oldPwd
+        return 0;
     }
+    return 0;
 }
-
-void showpid(){
-    if (!strcmp(cmd, "showpid") )
-    {
-       if(num_arg > 0){
-            perror("Too many parameters!\n");
-            illegal_cmd = true;
-        }
-       else{
-           cout << "smash pid is " << getpid() << endl;
-       }
     
+    
+int showpid(){
+    if (!strcmp(cmd, "showpid") ){
+       if(num_arg > 0){
+           perror("Too many parameters!\n");
+           return 1;
+        }
+        cout << "smash pid is " << getpid() << endl;
+        return 0;
     }
+    return 0;
 }
 
 void set(char* lineSize){
@@ -126,7 +117,6 @@ void set(char* lineSize){
         args[i] = strtok(NULL, delimiters);
         if (args[i] != NULL)
             num_arg++;
-    
     }
 }
 
@@ -134,29 +124,50 @@ void set(char* lineSize){
 
 int main(int argc, const char * argv[]) {
    
-    char lineSize[] = "cd ..";
+    //cout << testPWD("pwd") << endl;
+    
+    char lineSize[] = "cd ../../Intermediates.noindex/XCBuildData";
     char makaf[] = "cd -";
+    char makafi[] = "cd -";
     
     set(lineSize);
-    //testCd(args[0]); //cd ..
-    
+    testCd(args[0]); //cd ..
     set(makaf);
-    //testCd(args[0]); //cd -
-   
-    
-    cout << "smash pid is " << getpid() << endl;
-    while(1){
-        perror("No such file or directory\n");
-    }
-    cout << " ya tz a ti" << endl;
+    testCd(args[0]); //cd -
+    set(makafi);
+    testCd(args[0]); //cd -
+
     
     
-    ///
-    //char check[MAX_LINE_SIZE];
-    //cout << strlen(check) << endl;
+    //cout << "smash pid is " << getpid() << endl;
     
+
     return 0;
 }
+
+
+/*
+ char check[MAX_LINE_SIZE] ="";
+ cout << strlen(check) << endl;
+ strcpy(check, lineSize);
+ cout << check << endl;
+ cout << strlen(check) << endl;
+ cout << lineSize << endl;
+ cout << strlen(lineSize) << endl;
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*
