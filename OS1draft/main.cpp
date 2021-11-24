@@ -12,14 +12,18 @@
 #define MAX_LINE_SIZE 80
 #define MAXARGS 20
 
-using std::cout;
-using std::endl;
+//using std::cout;
+//using std::endl;
+//using std::string;
+using namespace std;
 
 char* cmd;
 char* args[MAX_ARG];
 
-char oldPwd[MAX_LINE_SIZE];
-char tmpPwd[MAX_LINE_SIZE];
+char* oldPwd = NULL; //assign * and nullptr
+char* tmpPwd = NULL;
+
+
 
 bool illegal_cmd = false; // illegal command
 
@@ -68,20 +72,47 @@ void testCd(char * cmd){
         //0 if equal  //we change folder   cd -
         else{
             char nextPwd[MAX_LINE_SIZE];
-             if(!strcmp(args[1], dash)){
-                 strcpy(nextPwd, oldPwd);
-             }
+             if(!strcmp(args[1], dash)){ //enter if parameter is '-'
+                 if (oldPwd == NULL){
+                     perror("No such file or directory\n"); //do we need a \n
+                     illegal_cmd = true;
+                     return 1;
+                 }
+                 else{
+                     strcpy(nextPwd, oldPwd); //oldPwd isn't NULL
+                 }
+                 
+             } //finish if parameter is '-'
              else{
                  strcpy(nextPwd, args[1]);
              }
-            strcpy(tmpPwd, getcwd(NULL, 0));
+
+            strcpy(tmpPwd, getcwd(NULL, 0)); //tmpPwd <- current directory
             if(chdir(nextPwd) == 0){
                 char* current = getcwd(NULL, 0);
                 cout << current << endl;
-                strcpy(oldPwd, tmpPwd);
+                //strcpy(oldPwd, tmpPwd);
+                
+            }
+            else{
+                cerr << " \"" << nextPwd << "\" - No such file or directory\n" << endl;
             }
 
         }
+    }
+}
+
+void showpid(){
+    if (!strcmp(cmd, "showpid") )
+    {
+       if(num_arg > 0){
+            perror("Too many parameters!\n");
+            illegal_cmd = true;
+        }
+       else{
+           cout << "smash pid is " << getpid() << endl;
+       }
+    
     }
 }
 
@@ -107,13 +138,23 @@ int main(int argc, const char * argv[]) {
     char makaf[] = "cd -";
     
     set(lineSize);
-    testCd(args[0]); //cd ..
+    //testCd(args[0]); //cd ..
     
     set(makaf);
-    testCd(args[0]); //cd -
+    //testCd(args[0]); //cd -
+   
     
-
-
+    cout << "smash pid is " << getpid() << endl;
+    while(1){
+        perror("No such file or directory\n");
+    }
+    cout << " ya tz a ti" << endl;
+    
+    
+    ///
+    //char check[MAX_LINE_SIZE];
+    //cout << strlen(check) << endl;
+    
     return 0;
 }
 
