@@ -7,10 +7,17 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <list>
+#include <time.h>
 
 #define MAX_ARG 20
 #define MAX_LINE_SIZE 80
 #define MAXARGS 20
+#define MAXHISTORY 50
+
+
+ //put initialiser in h file
+
 
 //using std::cout;
 //using std::endl;
@@ -28,6 +35,7 @@ char oldPwd[MAX_LINE_SIZE] ="";
 char tmpPwd[MAX_LINE_SIZE] ="";
 char dash[] = "-";
 
+list<string> cmdHistory;
 
 bool illegal_cmd = false; // illegal command
 
@@ -35,6 +43,70 @@ const char* delimiters = " \t\n";
 
 int i = 0;
 int num_arg = 0;
+
+
+class Job{
+    int serial_;
+    string command_;
+    int pid_;
+    time_t time_;
+    bool stopped_;
+    
+    public:
+    static int jobCount;
+    Job(string command, int pid, bool stopped) : command_(command), pid_(pid), stopped_(stopped){
+        serial_ =jobCount++;
+        time_=(time(NULL));
+    }
+    
+    int getSerial(){
+        return serial_;
+    }
+
+    string getCommand(){
+        return command_;
+    }
+    
+    int getPid(){
+        return pid_;
+    }
+    
+    time_t getTime_(){
+        return time_;
+    }
+    
+    //true if stopped
+    bool isStopped_(){
+        return stopped_;
+    }
+    
+    void setStopped_(bool setStatus){
+        if (setStatus == true){ //user want process to STOP!
+            stopped_=true;
+        }
+        else{ //user want process to RUN!
+            stopped_=false;
+        }
+    }
+    
+    
+};
+
+int Job::jobCount = 0;
+
+int testHistory(char * cmd){
+    if (!strcmp(cmd, "history")){
+        if (num_arg != 0){
+            perror("Too many parameters!\n");
+            return 1;
+        }
+        for (std::list<string>::iterator it=cmdHistory.begin(); it != cmdHistory.end(); ++it)
+          std::cout << *it << endl;
+        return 0;
+        }
+    return 0;
+}
+
 
 
 int testPWD(char * cmd){
@@ -54,7 +126,6 @@ int testPWD(char * cmd){
         }
     return 0;
 }
-
 
     
 int testCd(char * cmd){
@@ -130,13 +201,28 @@ int main(int argc, const char * argv[]) {
     char makaf[] = "cd -";
     char makafi[] = "cd -";
     
+
+    if (cmdHistory.size() == MAXHISTORY ){
+        cmdHistory.pop_front();
+    }
+    cmdHistory.push_back("shalom");
+    
+    for (std::list<string>::iterator it=cmdHistory.begin(); it != cmdHistory.end(); ++it)
+      std::cout << *it << endl;
+    
+    time_t realtime = time(NULL);
+    std::cout << realtime << endl;
+    
+    
+    
+    /*
     set(lineSize);
     testCd(args[0]); //cd ..
     set(makaf);
     testCd(args[0]); //cd -
     set(makafi);
     testCd(args[0]); //cd -
-
+    */
     
     
     //cout << "smash pid is " << getpid() << endl;
@@ -144,6 +230,13 @@ int main(int argc, const char * argv[]) {
 
     return 0;
 }
+
+
+
+/*
+ string myints[] = {"a", "b", "c","d","e"};
+ std::list<string> cmdHistory; // (myints,myints+5);
+ */
 
 
 /*
