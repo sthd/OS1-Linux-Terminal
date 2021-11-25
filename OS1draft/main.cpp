@@ -10,18 +10,19 @@
 #include <list>
 #include <time.h>
 
+#include <vector>
+
+#include <chrono>
+#include <thread>
+using namespace std::this_thread; // sleep_for, sleep_until
+using namespace std::chrono; // nanoseconds, system_clock, seconds
+
+
 #define MAX_ARG 20
 #define MAX_LINE_SIZE 80
 #define MAXARGS 20
 #define MAXHISTORY 50
 
-
- //put initialiser in h file
-
-
-//using std::cout;
-//using std::endl;
-//using std::string;
 using namespace std;
 
 char* cmd;
@@ -41,6 +42,8 @@ bool illegal_cmd = false; // illegal command
 
 const char* delimiters = " \t\n";
 
+time_t calcJobTime;
+
 int i = 0;
 int num_arg = 0;
 
@@ -59,26 +62,16 @@ class Job{
         time_=(time(NULL));
     }
     
-    int getSerial(){
-        return serial_;
-    }
+    int getSerial(){return serial_;}
 
-    string getCommand(){
-        return command_;
-    }
+    string getCommand(){return command_;}
     
-    int getPid(){
-        return pid_;
-    }
+    int getPid(){return pid_;}
     
-    time_t getTime_(){
-        return time_;
-    }
+    time_t getTime_(){return time_;}
     
     //true if stopped
-    bool isStopped_(){
-        return stopped_;
-    }
+    bool isStopped_(){ return stopped_;}
     
     void setStopped_(bool setStatus){
         if (setStatus == true){ //user want process to STOP!
@@ -89,10 +82,51 @@ class Job{
         }
     }
     
+    void printJob(){
+        time_t runTime = time(NULL) - time_;
+        cout << "[" << serial_ << "] " << command_ << " : " << pid_ <<  " "<< runTime << " secs";
+        if (stopped_==true)
+            cout << " (Stopped)";
+        cout << endl;
+    }
     
 };
 
-int Job::jobCount = 0;
+vector<Job> jobsVector;
+
+Job* currentJob;
+
+Job* findJob(int serial){
+    for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
+        if (it->getSerial() == serial){
+            return *it;
+        }
+    return NULL;
+    }
+}
+
+void modifyJobList(){
+    pid_t wait;
+    int status;
+    for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
+        wait = waitpid(it->getPid(), &status, WNOHANG | WUNTRACED);
+        if (wait > 0){
+            if ( WIFEXITED(status) || WIFSIGNALED(status) ) {
+                jobsVector.erase(it);
+            }
+            else if (wait == -1){
+                if (errno == ECHILD){
+                  jobsVector.erase(it);
+                }
+                else
+                    perror("wait has failed");
+            }
+            
+    }
+        
+        
+}
+
 
 int testHistory(char * cmd){
     if (!strcmp(cmd, "history")){
@@ -106,8 +140,6 @@ int testHistory(char * cmd){
         }
     return 0;
 }
-
-
 
 int testPWD(char * cmd){
     if (!strcmp(cmd, "pwd")){
@@ -126,7 +158,6 @@ int testPWD(char * cmd){
         }
     return 0;
 }
-
     
 int testCd(char * cmd){
     if (!strcmp(cmd, "cd") ){
@@ -165,7 +196,6 @@ int testCd(char * cmd){
     return 0;
 }
     
-    
 int showpid(){
     if (!strcmp(cmd, "showpid") ){
        if(num_arg > 0){
@@ -191,7 +221,25 @@ void set(char* lineSize){
     }
 }
 
+int testJobs(){
+    if (!strcmp(cmd, "jobs"))
+    {
+        if (num_arg != 0){
+            perror("Too many parameters!\n");
+            return 1;
+        }
+        //need to add modify jobs
+        modifyJobList();
+        for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it)
+            it->printJob();
+    }
+    
+    return 0;
+    
+}
 
+
+int Job::jobCount = 0;
 
 int main(int argc, const char * argv[]) {
    
@@ -207,14 +255,30 @@ int main(int argc, const char * argv[]) {
     }
     cmdHistory.push_back("shalom");
     
+    
     for (std::list<string>::iterator it=cmdHistory.begin(); it != cmdHistory.end(); ++it)
       std::cout << *it << endl;
     
     time_t realtime = time(NULL);
-    std::cout << realtime << endl;
+    std::cout << realtime << endl;   //count from 1957
     
     
     
+    cout << time(NULL) - realtime << endl;
+    //Job(string command, int pid, bool stopped) : command_(command), pid_(pid), stopped_(stopped){
+    Job job1("cd .. &", 123, true);
+    Job job2("cd -", 127, false);
+    Job job3("pwd", 131, true);
+
+    
+    jobsVector.push_back(job1);
+    jobsVector.push_back(job2);
+    jobsVector.push_back(job3);
+    
+    for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it)
+        it->printJob();
+    int* d =(int*)malloc(sizeof(int));
+ 
     /*
     set(lineSize);
     testCd(args[0]); //cd ..
@@ -223,13 +287,50 @@ int main(int argc, const char * argv[]) {
     set(makafi);
     testCd(args[0]); //cd -
     */
-    
+    //cout << waitpid(getpid(), NULL, WNOHANG) << endl;
     
     //cout << "smash pid is " << getpid() << endl;
     
 
     return 0;
 }
+
+/*
+ 
+
+
+  //put initialiser in h file
+
+
+ //using std::cout;
+ //using std::endl;
+ //using std::string;
+ */
+
+
+
+/*
+ //sleep_for(seconds(3)); //wait for 3
+ 
+ cout << "1st job: " << endl;
+ job1.printJob();
+ cout << endl;
+ 
+ //sleep_for(seconds(8)); //wait for 3
+ 
+ cout << "2nd job: " << endl;
+ job2.printJob();
+ cout << endl;
+ 
+ cout << "3rd job: " << endl;
+ job3.printJob();
+ cout << endl;
+ cout << endl;
+ cout << "formidable 123" << endl;
+ cout << endl;
+ 
+ */
+
 
 
 
@@ -283,3 +384,6 @@ int main(int argc, const char * argv[]) {
  
  
  */
+
+
+
