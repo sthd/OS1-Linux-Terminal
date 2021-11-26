@@ -99,10 +99,11 @@ Job* currentJob;
 Job* findJob(int serial){
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
         if (it->getSerial() == serial){
-            return *it;
+            //return *it;
+            return NULL;
         }
-    return NULL;
     }
+    return NULL;
 }
 
 void modifyJobList(){
@@ -122,9 +123,158 @@ void modifyJobList(){
                     perror("wait has failed");
             }
             
+        }
     }
+}
+
+int whichSignal(int signalNumber){
+    switch(signalNumber) {
+      case SIGHUP:
+        // code block
+        break;
+      case y:
+        // code block
+        break;
+      default:
+        // code blo
+        case   SIGHUP    :
+            //code here
+            break;
+        case   SIGINT    :
+            //code here
+            break;
+        case   SIGQUIT   :
+            //code here
+            break;
+        case   SIGILL    :
+            //code here
+            break;
+        case   SIGTRAP   :
+            //code here
+            break;
+        case   SIGABRT   :
+            //code here
+            break;
+        case   SIGIOT    :
+            //code here
+            break;
+        case   SIGBUS    :
+            //code here
+            break;
+        case   SIGFPE    :
+            //code here
+            break;
+        case   SIGKILL   :
+            //code here
+            break;
+        case   SIGUSR1   :
+            //code here
+            break;
+        case   SIGSEGV   :
+            //code here
+            break;
+        case   SIGUSR2   :
+            //code here
+            break;
+        case   SIGPIPE   :
+            //code here
+            break;
+        case   SIGALRM   :
+            //code here
+            break;
+        case   SIGTERM   :
+            //code here
+            break;
+        case   SIGSTKFLT :
+            //code here
+            break;
+        case   SIGCHLD   :
+            //code here
+            break;
+        case   SIGCLD    :
+            //code here
+            break;
+        case   SIGCONT   :
+            //code here
+            break;
+        case   SIGSTOP   :
+            //code here
+            break;
+        case   SIGTSTP   :
+            //code here
+            break;
+        case   SIGTTIN   :
+            //code here
+            break;
+        case   SIGTTOU   :
+            //code here
+            break;
+        case   SIGURG    :
+            //code here
+            break;
+        case   SIGXCPU   :
+            //code here
+            break;
+        case   SIGXFSZ   :
+            //code here
+            break;
+        case   SIGVTALRM :
+            //code here
+            break;
+        case   SIGPROF   :
+            //code here
+            break;
+        case   SIGWINCH  :
+            //code here
+            break;
+        case   SIGPOLL   :
+            //code here
+            break;
+        case   SIGIO     :
+            //code here
+            break;
+        case   SIGPWR    :
+            //code here
+            break;
+        case   SIGSYS    :
+            //code here
+            break;
+            
+            
+    }
+}
+
+
+
+
+
+
+
+int testKill(){
+    if (!strcmp(cmd, "kill")){
+        if (num_arg != 2){
+            perror("Number of parameters doesn't match!\n");
+            return 1;
+        }
+        Job* currentJob = findJob(stoi(args[2]));
+        if (currentJob == NULL){
+            cerr << "smash error: > kill" << args[2] << "– job does not exist" << endl;
+            return 1;
+        }
         
+        int killNum = stoi(args[1]);
+        if (killNum < 0)
+            killNum = killNum*(-1);
+        else {
+            perror("illegal signal parameter!\n");
+            return 1;
+        }
         
+        for (std::list<string>::iterator it=cmdHistory.begin(); it != cmdHistory.end(); ++it)
+          std::cout << *it << endl;
+        return 0;
+        }
+    return 0;
 }
 
 
@@ -266,19 +416,32 @@ int main(int argc, const char * argv[]) {
     
     cout << time(NULL) - realtime << endl;
     //Job(string command, int pid, bool stopped) : command_(command), pid_(pid), stopped_(stopped){
-    Job job1("cd .. &", 123, true);
-    Job job2("cd -", 127, false);
-    Job job3("pwd", 131, true);
+    //Job job1("cd .. &", 123, true);
+    //Job job2("cd -", 127, false);
+    //Job job3("pwd", 131, true);
 
     
-    jobsVector.push_back(job1);
-    jobsVector.push_back(job2);
-    jobsVector.push_back(job3);
+    //jobsVector.push_back(job1);
+    //jobsVector.push_back(job2);
+    //jobsVector.push_back(job3);
     
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it)
         it->printJob();
     int* d =(int*)malloc(sizeof(int));
  
+    cout << "Test stoi : \n" << endl;
+
+    
+    string num = "5";
+    string negative = "-1";
+    int myint1 = stoi(num);
+    cout << myint1 << endl;
+    int myint2 = stoi(negative);
+    cout << myint2 << endl;
+    int killy;
+    if (myint2 < 0)
+        myint2 = myint2*(-1);
+     cout << myint2 << endl;
     /*
     set(lineSize);
     testCd(args[0]); //cd ..
