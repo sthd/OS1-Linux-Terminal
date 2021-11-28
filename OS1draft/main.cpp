@@ -10,6 +10,8 @@
 #include <list>
 #include <time.h>
 
+#include <signal.h>
+
 #include <vector>
 
 #include <chrono>
@@ -92,7 +94,7 @@ class Job{
     
 };
 
-vector<Job> jobsVector;
+vector<Job*> jobsVector;
 
 Job* currentJob;
 
@@ -127,129 +129,154 @@ void modifyJobList(){
     }
 }
 
-int whichSignal(int signalNumber){
+
+/*
+ *
+ */
+
+string whichSignal(int signalNumber){
     switch(signalNumber) {
-      case SIGHUP:
-        // code block
-        break;
-      case y:
-        // code block
-        break;
-      default:
-        // code blo
-        case   SIGHUP    :
-            //code here
-            break;
-        case   SIGINT    :
-            //code here
-            break;
-        case   SIGQUIT   :
-            //code here
-            break;
-        case   SIGILL    :
-            //code here
-            break;
-        case   SIGTRAP   :
-            //code here
-            break;
-        case   SIGABRT   :
-            //code here
-            break;
-        case   SIGIOT    :
-            //code here
-            break;
-        case   SIGBUS    :
-            //code here
-            break;
-        case   SIGFPE    :
-            //code here
-            break;
-        case   SIGKILL   :
-            //code here
-            break;
-        case   SIGUSR1   :
-            //code here
-            break;
-        case   SIGSEGV   :
-            //code here
-            break;
-        case   SIGUSR2   :
-            //code here
-            break;
-        case   SIGPIPE   :
-            //code here
-            break;
-        case   SIGALRM   :
-            //code here
-            break;
-        case   SIGTERM   :
-            //code here
-            break;
-        case   SIGSTKFLT :
-            //code here
-            break;
-        case   SIGCHLD   :
-            //code here
-            break;
-        case   SIGCLD    :
-            //code here
-            break;
-        case   SIGCONT   :
-            //code here
-            break;
-        case   SIGSTOP   :
-            //code here
-            break;
-        case   SIGTSTP   :
-            //code here
-            break;
-        case   SIGTTIN   :
-            //code here
-            break;
-        case   SIGTTOU   :
-            //code here
-            break;
-        case   SIGURG    :
-            //code here
-            break;
-        case   SIGXCPU   :
-            //code here
-            break;
-        case   SIGXFSZ   :
-            //code here
-            break;
-        case   SIGVTALRM :
-            //code here
-            break;
-        case   SIGPROF   :
-            //code here
-            break;
-        case   SIGWINCH  :
-            //code here
-            break;
-        case   SIGPOLL   :
-            //code here
-            break;
-        case   SIGIO     :
-            //code here
-            break;
-        case   SIGPWR    :
-            //code here
-            break;
-        case   SIGSYS    :
-            //code here
-            break;
-            
+
+        case 1 : return "SIGHUP"    ;
+        case 2 : return "SIGINT"    ;
+        case 3 : return "SIGQUIT"   ;
+        case 4 : return "SIGILL"    ;
+        case 5 : return "SIGTRAP"   ;
+        case 6 : return "SIGABRT"   ;
+        case 7 : return "SIGBUS"    ;
+        case 8 : return "SIGFPE"    ;
+        case 9 : return "SIGKILL"   ;
+        case 10: return "SIGUSR1"   ;
+        case 11: return "SIGSEGV"   ;
+        case 12: return "SIGUSR2"   ;
+        case 13: return "SIGPIPE"   ;
+        case 14: return "SIGALRM"   ;
+        case 15: return "SIGTERM"   ;
+        case 16: return "SIGSTKFLT" ;
+        case 17: return "SIGCHLD"   ;
+        case 18: return "SIGCONT"   ;
+        case 19: return "SIGSTOP"   ;
+        case 20: return "SIGTSTP"   ;
+        case 21: return "SIGTTIN"   ;
+        case 22: return "SIGTTOU"   ;
+        case 23: return "SIGURG"    ;
+        case 24: return "SIGXCPU"   ;
+        case 25: return "SIGXFSZ"   ;
+        case 26: return "SIGVTALRM" ;
+        case 27: return "SIGPROF"   ;
+        case 28: return "SIGWINCH"  ;
+        case 29: return "SIGIO"     ;
+        case 30: return "SIGPWR"    ;
+        case 31: return "SIGSYS"    ;
+        default: return ""          ;
             
     }
 }
 
+int testBG(){
+     if (!strcmp(cmd, "bg")){
+         Job* currentJob = NULL;
+         if (num_arg > 1){
+             perror("Too many parameters!\n");
+             return 1;
+         }
+         if (num_arg == 1){
+             currentJob = findJob(stoi(args[1]));
+             if (currentJob == NULL){
+                 cerr << "smash error: > " << args[1] << " job does not exist" << endl;
+                 return 1;
+             }
+             if (currentJob->isStopped_() == false){
+                 cerr << "smash error: > " << args[1] << " job already runs in background" << endl;
+                 return 1;
+             }
+
+             // send kill to check if stopped
+             //cout << args[1] << endl;
+             //return 0;
+         }
+         
+         if (num_arg == 0){
+             for (std::vector<Job>::reverse_iterator rit=jobsVector.rbegin(); rit != jobsVector.rend(); ++rit){
+                 if (rit->isStopped_() == true){
+                     currentJob = &(Job*)rit; //
+                     break; //MUST exit this for loop
+                 }
+                 cerr << "smash error: > " << " no waiting jobs in background\n" << endl;
+                 return 1;
+             }
+         }
+         if (kill(currentJob->getPid(), SIGCONT) == -1){
+             cerr << "smash error: > kill" << currentJob->getSerial() << "– cannot send signal\n" << endl;
+             cerr << "erase this comment! job stopped but couldn't send cont signal" << endl;
+             return 1;
+         }
+         else{
+             currentJob->setStopped_(false);
+             cout << currentJob->getCommand() << endl;
+         }
+         return 0;
+     }
+}
+             
+
+
+int testFG(){
+     if (!strcmp(cmd, "fg")){
+         Job* currentJob = NULL;
+         if (num_arg > 1){
+             perror("Too many parameters!\n");
+             return 1;
+         }
+         if (num_arg == 1){
+             currentJob = findJob(stoi(args[1]));
+             if (currentJob == NULL){
+                 cerr << "smash error: > " << args[1] << " job does not exist" << endl;
+                 return 1;
+             }
+         }
+         
+         if (num_arg == 0){
+             if ( jobsVector.size() == 0 ){
+                 cerr << "smash error: > " << " job list is empty\n" << endl;
+                 return 1;
+             }
+             else{
+                 std::vector<Job>::reverse_iterator rit=jobsVector.rbegin();
+                 currentJob = *rit;
+                 //Job curry = *rit;
+             }
+         }
+         //update the command to run in FG.   use the command pid to actually run it over smash
+         
+         
+         if (kill(currentJob->getPid(), SIGCONT) == -1){
+             cerr << "smash error: > kill" << currentJob->getSerial() << "– cannot send signal\n" << endl;
+             cerr << "erase this comment! job stopped but couldn't send cont signal" << endl;
+             return 1;
+         }
+         else{
+             currentJob->setStopped_(false);
+             cout << currentJob->getCommand() << endl;
+         }
+         return 0;
+     }
+}
 
 
 
+int testFunc(){
+     if (!strcmp(cmd, "func")){
+         
+     }
+    return 0;
+}
 
 
 
+/*
+ *
+ */
 int testKill(){
     if (!strcmp(cmd, "kill")){
         if (num_arg != 2){
@@ -269,6 +296,24 @@ int testKill(){
             perror("illegal signal parameter!\n");
             return 1;
         }
+        if ( killNum>31){
+            perror("illegal signal parameter! bigger than 31\n");
+            return 1;
+        }
+        if (kill(currentJob->getPid(), killNum) == -1){
+            cerr << "smash error: > kill" << args[2] << "– cannot send signal" << endl;
+            return 1;
+        }
+        if ( (killNum == SIGSTOP) || (killNum == SIGTSTP) ){
+            currentJob->setStopped_(true);
+        }
+        else if (killNum == SIGCONT ){
+            currentJob->setStopped_(false);
+        }
+        else if ( (killNum == SIGKILL) || (killNum == SIGTERM) ){
+            modifyJobList();
+        }
+
         
         for (std::list<string>::iterator it=cmdHistory.begin(); it != cmdHistory.end(); ++it)
           std::cout << *it << endl;
@@ -391,6 +436,9 @@ int testJobs(){
 
 int Job::jobCount = 0;
 
+
+
+
 int main(int argc, const char * argv[]) {
    
     //cout << testPWD("pwd") << endl;
@@ -425,12 +473,15 @@ int main(int argc, const char * argv[]) {
     //jobsVector.push_back(job2);
     //jobsVector.push_back(job3);
     
+    
+    
+    
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it)
         it->printJob();
     int* d =(int*)malloc(sizeof(int));
  
     cout << "Test stoi : \n" << endl;
-
+    
     
     string num = "5";
     string negative = "-1";
