@@ -30,6 +30,9 @@ using namespace std;
 char* cmd;
 char* args[MAX_ARG];
 
+int fg_pid;
+string fg_cmd;
+
 //char* oldPwd = NULL; //assign * and nullptr
 //char* tmpPwd = NULL;
 // You can initialize it the way your instructor suggested as you declare the array:
@@ -94,15 +97,14 @@ class Job{
     
 };
 
-vector<Job*> jobsVector;
+vector<Job> jobsVector;
 
 Job* currentJob;
 
 Job* findJob(int serial){
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
         if (it->getSerial() == serial){
-            //return *it;
-            return NULL;
+            return &(*it);
         }
     }
     return NULL;
@@ -199,13 +201,16 @@ int testBG(){
          if (num_arg == 0){
              for (std::vector<Job>::reverse_iterator rit=jobsVector.rbegin(); rit != jobsVector.rend(); ++rit){
                  if (rit->isStopped_() == true){
-                     currentJob = &(Job*)rit; //
+                     currentJob = &(*rit); //
                      break; //MUST exit this for loop
                  }
+             }
+             if (currentJob==NULL){
                  cerr << "smash error: > " << " no waiting jobs in background\n" << endl;
                  return 1;
              }
          }
+         
          if (kill(currentJob->getPid(), SIGCONT) == -1){
              cerr << "smash error: > kill" << currentJob->getSerial() << "– cannot send signal\n" << endl;
              cerr << "erase this comment! job stopped but couldn't send cont signal" << endl;
@@ -217,6 +222,7 @@ int testBG(){
          }
          return 0;
      }
+    return 0;
 }
              
 
@@ -243,24 +249,34 @@ int testFG(){
              }
              else{
                  std::vector<Job>::reverse_iterator rit=jobsVector.rbegin();
-                 currentJob = *rit;
-                 //Job curry = *rit;
+                 currentJob = &(*rit);
              }
          }
-         //update the command to run in FG.   use the command pid to actually run it over smash
+         //update the command to run in FG.
+         //use the command pid to actually run it over smash
          
-         
-         if (kill(currentJob->getPid(), SIGCONT) == -1){
-             cerr << "smash error: > kill" << currentJob->getSerial() << "– cannot send signal\n" << endl;
-             cerr << "erase this comment! job stopped but couldn't send cont signal" << endl;
+         if(currentJob->isStopped_() == true){
+             if (kill(currentJob->getPid(), SIGCONT) == -1){
+                 cerr << "smash error: > kill" << currentJob->getSerial() << "– cannot send signal\n" << endl;
+                 cerr << "erase this comment! job stopped but couldn't send cont signal" << endl;
+                 return 1;
+             }
+         }
+         currentJob->setStopped_(false);
+         fg_pid=currentJob->getPid();
+         fg_cmd = currentJob->getCommand();  //consider char* or strcpy etc
+         cout << currentJob->getCommand() << endl;
+         if (waitpid(fg_pid, NULL, WUNTRACED) ==-1){
+             //assigned NULL for status so we can run
+              cerr << "waitpid for FG failed" << endl;
              return 1;
          }
-         else{
-             currentJob->setStopped_(false);
-             cout << currentJob->getCommand() << endl;
-         }
+         fg_pid=0;
+         fg_cmd = "SMASH";
          return 0;
+         // !!CHECK: need to print sig cont etc
      }
+    return 0;
 }
 
 
@@ -321,7 +337,6 @@ int testKill(){
         }
     return 0;
 }
-
 
 int testHistory(char * cmd){
     if (!strcmp(cmd, "history")){
@@ -433,12 +448,71 @@ int testJobs(){
     
 }
 
-
 int Job::jobCount = 0;
 
 
+//**************************************************************************************
+// function name: ExeExternal
+// Description: executes external command
+// Parameters: external command arguments, external command string
+// Returns: void
+//**************************************************************************************
+void ExeExternal(char *args[MAX_ARG], char* cmdString)
+{
+    int pID;
+        switch(pID = fork())
+    {
+            case -1:
+                    // Add your code here (error)
+                    cerr << "smash error: > " << cmdString << endl;
+            return;
+                    /*
+                    your code
+                    */
+            case 0 :
+                    // Child Process
+                       setpgrp();
+            if (execvp(args[0], args) ==-1){
+                cerr << "you used execvp from ExeExternal but failed to exec" << cmdString << endl;
+                if (kill(getpid(), SIGKILL) == -1){
+                    cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
+                    cerr << "CHECK!! sigKILL falied! " << endl;
+                    return;
+                }
+            }
+        
+                    // Add your code here (execute an external command)
+                    
+                    /*
+                    your code
+                    */
+            
+            default:
+            fg_pid=pID;
+            fg_cmd=cmdString;
+           if (waitpid(fg_pid, NULL, WUNTRACED) ==-1){
+                //assigned NULL for status so we can run
+                 cerr << "waitpid for child ExeCVP failed" << endl;
+                return;
+            }
+            fg_pid=0;
+            fg_cmd = "SMASH";
+            return;
+            // !!CHECK: need to print sig cont etc
+                    // Add your code here
+                    
+                    /*
+                    your code
+                    */
+    }
+}
 
 
+
+
+/*
+ *
+ */
 int main(int argc, const char * argv[]) {
    
     //cout << testPWD("pwd") << endl;
@@ -457,29 +531,30 @@ int main(int argc, const char * argv[]) {
     for (std::list<string>::iterator it=cmdHistory.begin(); it != cmdHistory.end(); ++it)
       std::cout << *it << endl;
     
-    time_t realtime = time(NULL);
-    std::cout << realtime << endl;   //count from 1957
-    
-    
-    
-    cout << time(NULL) - realtime << endl;
-    //Job(string command, int pid, bool stopped) : command_(command), pid_(pid), stopped_(stopped){
-    //Job job1("cd .. &", 123, true);
-    //Job job2("cd -", 127, false);
-    //Job job3("pwd", 131, true);
 
     
-    //jobsVector.push_back(job1);
-    //jobsVector.push_back(job2);
-    //jobsVector.push_back(job3);
+    //Job(string command, int pid, bool stopped) : command_(command), pid_(pid), stopped_(stopped){
+    Job job1("cd .. &", 123, true);
+    Job job2("cd -", 127, false);
+    Job job3("pwd", 131, true);
     
+    jobsVector.push_back(job1);
+    jobsVector.push_back(job2);
+    jobsVector.push_back(job3);
     
+    for (int i=0; i<4; i++){
+        cout << "The job we return here is : " << i << endl;
+        currentJob =findJob(i);
+        if (currentJob != NULL)
+            currentJob->printJob();
+        cout << "shem mashmauti " << endl;
+    }
     
     
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it)
         it->printJob();
-    int* d =(int*)malloc(sizeof(int));
- 
+    
+    
     cout << "Test stoi : \n" << endl;
     
     
@@ -509,16 +584,20 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 
-/*
- 
+/* //test of time stamp. how long a process was in jobs
+ time_t realtime = time(NULL);
+ std::cout << realtime << endl;   //count from 1957
+ cout << time(NULL) - realtime << endl;
+ */
 
 
-  //put initialiser in h file
 
 
- //using std::cout;
- //using std::endl;
- //using std::string;
+/* //using std seperately
+ put initialiser in h file
+ using std::cout;
+ using std::endl;
+ using std::string;
  */
 
 
@@ -565,17 +644,7 @@ int main(int argc, const char * argv[]) {
  */
 
 
-
-
-
-
-
-
-
-
-
-
-
+//    int* d =(int*)malloc(sizeof(int));
 
 
 /*
