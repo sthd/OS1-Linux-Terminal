@@ -12,6 +12,8 @@
 
 #include <signal.h>
 
+#include <fcntl.h>
+
 #include <vector>
 
 #include <chrono>
@@ -75,16 +77,13 @@ class Job{
     
     time_t getTime_(){return time_;}
     
-    //true if stopped
-    bool isStopped_(){ return stopped_;}
+    
+    bool isStopped_(){ return stopped_;} //returns TRUE if job STOPPED
+    
     
     void setStopped_(bool setStatus){
-        if (setStatus == true){ //user want process to STOP!
-            stopped_=true;
-        }
-        else{ //user want process to RUN!
-            stopped_=false;
-        }
+        if (setStatus == true) stopped_=true; //set job as STOPPED!
+        else stopped_=false; //set job as RUNNING!
     }
     
     void printJob(){
@@ -100,15 +99,6 @@ class Job{
 vector<Job> jobsVector;
 
 Job* currentJob;
-
-Job* findJob(int serial){
-    for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
-        if (it->getSerial() == serial){
-            return &(*it);
-        }
-    }
-    return NULL;
-}
 
 void modifyJobList(){
     pid_t wait;
@@ -126,16 +116,35 @@ void modifyJobList(){
                 else
                     perror("wait has failed");
             }
-            
         }
     }
 }
+
+Job* findJobSerial(int serial){
+    //modifyJobList();
+    for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
+        if (it->getSerial() == serial){
+            return &(*it);
+        }
+    }
+    return NULL;
+}
+
+Job* findJobPID(int pid){
+    //modifyJobList();
+    for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
+        if (it->getPid() == pid){
+            return &(*it);
+        }
+    }
+    return NULL;
+}
+
 
 
 /*
  *
  */
-
 string whichSignal(int signalNumber){
     switch(signalNumber) {
 
@@ -182,8 +191,9 @@ int testBG(){
              perror("Too many parameters!\n");
              return 1;
          }
+         modifyJobList();
          if (num_arg == 1){
-             currentJob = findJob(stoi(args[1]));
+             currentJob = findJobSerial(stoi(args[1]));
              if (currentJob == NULL){
                  cerr << "smash error: > " << args[1] << " job does not exist" << endl;
                  return 1;
@@ -234,8 +244,9 @@ int testFG(){
              perror("Too many parameters!\n");
              return 1;
          }
+         modifyJobList();
          if (num_arg == 1){
-             currentJob = findJob(stoi(args[1]));
+             currentJob = findJobSerial(stoi(args[1]));
              if (currentJob == NULL){
                  cerr << "smash error: > " << args[1] << " job does not exist" << endl;
                  return 1;
@@ -288,6 +299,117 @@ int testFunc(){
     return 0;
 }
 
+int testDiff(){
+     if (!strcmp(cmd, "diff")){
+         int file1, file2;
+         ssize_t bytesRead1, bytesRead2;
+         const int nbytes=1;
+         
+         file1 = open(args[1], O_RDONLY);
+         if (file1 == -1){
+             cerr << "FILE1 ERROR: No such file or directory" << endl;
+             return 1;
+         }
+         file2 = open(args[2], O_RDONLY);
+         if (file2 == -1){
+             if (close(file1) == -1){
+                cerr << "FILE1 ERROR: close file failed!" << endl;
+             }
+             cerr << "FILE2 ERROR: No such file or directory" << endl;
+             return 1;
+         }
+         
+         char* buff1 = NULL;
+         char* buff2 = NULL;
+         bytesRead1 = read(file1, buff1, nbytes);
+         bytesRead2 = read(file2, buff2, nbytes);
+         while(bytesRead1!=0 || bytesRead2!=0){
+             if(bytesRead1==-1 || bytesRead2==-1){
+                cerr << "Unable to read file" << endl;
+                 if (close(file1) == -1 || close(file2) == -1  ){
+                     cerr << "FILE ERROR: close file failed!" << endl;
+                     return 1;
+                 }
+             }
+             if (bytesRead1==0 || bytesRead2==0){
+                 cout << "1" <<endl;
+                 if (close(file1) == -1 || close(file2) == -1  ){
+                     cerr << "FILE ERROR: close file failed!" << endl;
+                     return 1;
+                 }
+                 return 0;
+             }
+             if (*buff1!=*buff2){
+                 cout << "1" <<endl;
+                     if (close(file1) == -1 || close(file2) == -1  ){
+                         cerr << "FILE ERROR: close file failed!" << endl;
+                         return 1;
+                     }
+                     return 0;
+            }
+             bytesRead1 = read(file1, buff1, nbytes);
+             bytesRead2 = read(file2, buff2, nbytes);
+             
+         }
+         cout << "0" <<endl;
+         if (close(file1) == -1 || close(file2) == -1  ){
+            cerr << "FILE ERROR: close file failed!" << endl;
+            return 1;
+        }
+     }
+    return 0;
+}
+
+int testQuit(){
+     if (!strcmp(cmd, "quit")){
+         if (num_arg > 1){
+            cerr << "smash error: > too many argument for quit" << endl;
+            return 1;
+         }
+         if (num_arg == 0){
+            exit(0);
+         }
+         //if args[1] == kill we return 1
+         modifyJobList();
+         if (num_arg ==1 && (!strcmp(args[1], "kill") ) ){
+            //go through jobs
+            //send sigterm to each job
+            //check if job terminated
+             for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
+                 if (kill(it->getPid(), SIGTERM) == -1){
+                     cerr << "smash error: > kill" << it->getSerial() << "– cannot send signal\n" << endl;
+                     return 1; //system call failed!
+                 }
+                 cout << "[" << it->getSerial() << "] " << it->getCommand() << " - Sending SIGTERM... "; //flush?
+                 sleep_for(seconds(5));
+                 int wait = waitpid(it->getPid(), NULL, WNOHANG);
+                 if (wait < 0){
+                     cerr << "smash error: > wait for child failed" << endl;
+                     return 1;
+                 }
+                 if (wait > 0){
+                     cout << "Done" <<endl;
+                 }
+                 if (wait == 0){
+                     if (kill(it->getPid(), SIGKILL) == -1){
+                         cerr << "smash error: > kill" << it->getSerial() << "– cannot send signal\n" << endl;
+                         return 1; //system call failed!
+                     }
+                     cout << " (5 sec passed) Sending SIGKILL... Done" << endl;
+                 }
+             }
+             exit(0);
+        }
+         cerr << "Illegal KILL command!" << endl;
+
+     }
+    return 1;
+}
+
+
+
+
+ //if (!strcmp(cmd, "quit"))
 
 
 /*
@@ -299,7 +421,8 @@ int testKill(){
             perror("Number of parameters doesn't match!\n");
             return 1;
         }
-        Job* currentJob = findJob(stoi(args[2]));
+        modifyJobList();
+        Job* currentJob = findJobSerial(stoi(args[2]));
         if (currentJob == NULL){
             cerr << "smash error: > kill" << args[2] << "– job does not exist" << endl;
             return 1;
@@ -432,8 +555,7 @@ void set(char* lineSize){
 }
 
 int testJobs(){
-    if (!strcmp(cmd, "jobs"))
-    {
+    if (!strcmp(cmd, "jobs")){
         if (num_arg != 0){
             perror("Too many parameters!\n");
             return 1;
@@ -443,9 +565,7 @@ int testJobs(){
         for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it)
             it->printJob();
     }
-    
     return 0;
-    
 }
 
 int Job::jobCount = 0;
@@ -508,13 +628,131 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 }
 
 
+int BgCmd(char* lineSize, void* jobs)
+{
+
+    char* Command;
+    //char* delimiters = " \t\n";
+    char *args[MAX_ARG];
+    if (lineSize[strlen(lineSize)-2] == '&')
+    {
+        lineSize[strlen(lineSize)-2] = '\0';
+        // Add your code here (execute a in the background)
+
+        char cmdString[MAX_LINE_SIZE];
+        strcpy(cmdString, lineSize);
+        cmdString[strlen(lineSize)-1]='\0';
+        int i = 0, num_arg = 0;
+        Command = strtok(lineSize, delimiters);
+        if (Command == NULL) return 0;
+        
+        args[0] = Command;
+        for (i=1; i<MAX_ARG; i++)
+        {
+            args[i] = strtok(NULL, delimiters);
+            if (args[i] != NULL)
+                num_arg++;
+        }
+
+        int pID;
+            switch(pID = fork())
+        {
+                case -1:
+                        // Add your code here (error)
+                    std::cerr << "smash error: > " << cmdString << std::endl;
+                    return -1;
+
+                case 0 :
+                        // Child Process
+                           setpgrp();
+                    //???? when execvp happens it's like a bg cmd??
+                    if (execvp(args[0], args) ==-1){
+                        cerr << "you used execvp from bgCMD but failed to exec" << cmdString << endl;
+                        if (kill(getpid(), SIGKILL) == -1){
+                            cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
+                            cerr << "CHECK!! sigKILL falied! " << endl;
+                            return -1;
+                        }
+                    }
+                
+                default:
+                    Job jobBG(cmdString, pID, false);
+                    jobsVector.push_back(jobBG);
+                return 0;
+        }
+    }
+
+    return -1;
+}
+
+/*
+* ****CHECK when to modify - might be a problem with kill
+*/
+
+void ctrl_Z_handler(int i){
+    if (fg_pid <= 0)
+        return;
+    sigset_t mask_set;
+    sigset_t old_set;
+    sigfillset(&mask_set);
+    sigprocmask(SIG_SETMASK, &mask_set, &old_set);
+    if (kill(fg_pid, SIGTSTP) == -1){
+        cerr << "smash error: > kill " << fg_cmd << " – cannot send signal" << endl;
+        sigprocmask(SIG_SETMASK, &old_set, &mask_set);
+        return;
+    }
+    modifyJobList();
+    currentJob=findJobPID(fg_pid);
+    if (currentJob == NULL){
+        Job newJob=Job(fg_cmd, fg_pid, true);
+        jobsVector.push_back(newJob);
+    }
+    else{
+        currentJob->setStopped_(true);
+    }
+    sigprocmask(SIG_SETMASK, &old_set, &mask_set);
+    return;
+}
 
 
 /*
- *
+ * ****CHECK when to modify - might be a problem with kill
+ */
+
+void ctrl_C_handler(int i){
+    if (fg_pid <= 0)
+        return;
+    sigset_t mask_set;
+    sigset_t old_set;
+    sigfillset(&mask_set);
+    sigprocmask(SIG_SETMASK, &mask_set, &old_set);
+    if (kill(fg_pid, SIGINT) == -1){
+        cerr << "smash error: > kill " << fg_cmd << " – cannot send signal" << endl;
+        sigprocmask(SIG_SETMASK, &old_set, &mask_set);
+        return;
+    }
+    
+    modifyJobList();
+    currentJob=findJobPID(fg_pid);
+    if (currentJob != NULL){
+        //jobsVector.erase(currentJob);
+    }
+    else{
+        currentJob->setStopped_(true);
+    }
+    sigprocmask(SIG_SETMASK, &old_set, &mask_set);
+    return;
+}
+
+
+
+/*
+ * tests of draft
  */
 int main(int argc, const char * argv[]) {
    
+
+    
     //cout << testPWD("pwd") << endl;
     
     char lineSize[] = "cd ../../Intermediates.noindex/XCBuildData";
@@ -544,7 +782,7 @@ int main(int argc, const char * argv[]) {
     
     for (int i=0; i<4; i++){
         cout << "The job we return here is : " << i << endl;
-        currentJob =findJob(i);
+        currentJob =findJobSerial(i);
         if (currentJob != NULL)
             currentJob->printJob();
         cout << "shem mashmauti " << endl;
@@ -555,19 +793,9 @@ int main(int argc, const char * argv[]) {
         it->printJob();
     
     
-    cout << "Test stoi : \n" << endl;
+    signal(SIGTSTP,cnt_z_handler);
+    signal(SIGINT,cnt_c_handler);
     
-    
-    string num = "5";
-    string negative = "-1";
-    int myint1 = stoi(num);
-    cout << myint1 << endl;
-    int myint2 = stoi(negative);
-    cout << myint2 << endl;
-    int killy;
-    if (myint2 < 0)
-        myint2 = myint2*(-1);
-     cout << myint2 << endl;
     /*
     set(lineSize);
     testCd(args[0]); //cd ..
@@ -584,7 +812,25 @@ int main(int argc, const char * argv[]) {
     return 0;
 }
 
-/* //test of time stamp. how long a process was in jobs
+
+/* **** STOI test
+cout << "Test stoi : \n" << endl;
+string num = "5";
+string negative = "-1";
+int myint1 = stoi(num);
+cout << myint1 << endl;
+int myint2 = stoi(negative);
+cout << myint2 << endl;
+
+
+if (myint2 < 0)
+    myint2 = myint2*(-1);
+ cout << myint2 << endl;
+*/
+
+
+/* **** TIME test
+ //test of time stamp. how long a process was in jobs
  time_t realtime = time(NULL);
  std::cout << realtime << endl;   //count from 1957
  cout << time(NULL) - realtime << endl;
@@ -593,7 +839,8 @@ int main(int argc, const char * argv[]) {
 
 
 
-/* //using std seperately
+/* **** STD test
+ //using std seperately
  put initialiser in h file
  using std::cout;
  using std::endl;
@@ -602,7 +849,7 @@ int main(int argc, const char * argv[]) {
 
 
 
-/*
+/* **** SLEEP test
  //sleep_for(seconds(3)); //wait for 3
  
  cout << "1st job: " << endl;
@@ -627,13 +874,13 @@ int main(int argc, const char * argv[]) {
 
 
 
-/*
+/* **** STRING LIST test
  string myints[] = {"a", "b", "c","d","e"};
  std::list<string> cmdHistory; // (myints,myints+5);
  */
 
 
-/*
+/* **** STRING SIZE test
  char check[MAX_LINE_SIZE] ="";
  cout << strlen(check) << endl;
  strcpy(check, lineSize);
@@ -643,17 +890,17 @@ int main(int argc, const char * argv[]) {
  cout << strlen(lineSize) << endl;
  */
 
+/* **** MALLOC test
+ int* d =(int*)malloc(sizeof(int));
+ */
 
-//    int* d =(int*)malloc(sizeof(int));
 
 
-/*
+/* **** CHAR[] test
  //testPWD(lineSize);
  char* current1 = getcwd(NULL, 0);
  char changeme[] = "..";
  char change[] = "cd ..";
- 
- 
  
  char* current2 = getcwd(NULL, 0);
  
@@ -664,7 +911,6 @@ int main(int argc, const char * argv[]) {
  cout << current1 << endl;
  cout << current2 << endl;
  cout << current3 << endl;
- 
  
  */
 
