@@ -7,8 +7,10 @@
 char* cmd;
 char* args[MAX_ARG];
 
-int fg_pid;
-string fg_cmd;
+extern int fg_pid;
+extern string fg_cmd;
+extern vector<Job> jobsVector;
+extern Job* currentJob;
 
 
 string whichSignal(int signalNumber){
@@ -66,9 +68,6 @@ time_t calcJobTime;
 int i = 0;
 int num_arg = 0;
 
-vector<Job> jobsVector;
-
-Job* currentJob;
 
 void modifyJobList(){
     pid_t wait;
@@ -138,6 +137,14 @@ int ExeCmd(char* lineSize, char* cmdString){
 			num_arg++; 
  
 	}
+    
+    if (cmdHistory.size() == MAXHISTORY ){
+        cmdHistory.pop_front();
+    }
+    char tmpy[MAX_LINE_SIZE];
+    strcpy(tmpy, cmdString);
+    tmpy[strlen(lineSize)]='\0';
+    cmdHistory.push_back(tmpy);
 /*************************************************/
 // Built in Commands PLEASE NOTE NOT ALL REQUIRED
 // ARE IN THIS CHAIN OF IF COMMANDS. PLEASE ADD

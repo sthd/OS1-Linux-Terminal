@@ -46,7 +46,7 @@ class Job{
     
 };
 
-int Job::jobCount = 0;
+//int Job::jobCount = 0;
 
 #endif
 
