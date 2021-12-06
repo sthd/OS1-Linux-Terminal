@@ -4,6 +4,7 @@
 //using namespace std;
 
 
+
 class Job{
     int serial_;
     string command_;
@@ -44,6 +45,8 @@ class Job{
     }
     
 };
+
+int Job::jobCount = 0;
 
 #endif
 

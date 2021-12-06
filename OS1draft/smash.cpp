@@ -29,6 +29,8 @@ vector<Job> jobsVector;
 int fg_pid;
 string fg_cmd;
 
+Job* currentJob;
+
 //**************************************************************************************
 // function name: main
 // Description: main function of smash. get command from user and calls command functions

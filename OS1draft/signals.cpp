@@ -6,8 +6,14 @@
 /* Name: handler_cntlc
    Synopsis: handle the Control-C */
 #include "signals.h"
+#include "job.h"
+#include "commands.h"
 
 extern int fg_pid;
+extern string fg_cmd;
+extern Job* currentJob;
+extern vector<Job> jobsVector;
+
 
 /*
 * ****CHECK when to modify - might be a problem with kill

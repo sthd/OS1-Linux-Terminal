@@ -110,7 +110,7 @@ Job* findJobPID(int pid){
     return NULL;
 }
 
-int Job::jobCount = 0;
+
 
 
 
@@ -123,7 +123,7 @@ int Job::jobCount = 0;
 int ExeCmd(char* lineSize, char* cmdString){
 	char* cmd; 
 	char* args[MAX_ARG];
-	char pwd[MAX_LINE_SIZE];
+	//char pwd[MAX_LINE_SIZE];
 	//char* delimiters = " \t\n";
 	int i = 0, num_arg = 0;
 	bool illegal_cmd = false; // illegal command
@@ -538,8 +538,8 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString){
 // Returns: 0- if complicated -1- if not
 //**************************************************************************************
 int ExeComp(char* lineSize){
-	char ExtCmd[MAX_LINE_SIZE+2];
-	char *args[MAX_ARG];
+	//char ExtCmd[MAX_LINE_SIZE+2];
+	//char *args[MAX_ARG];
     if ((strstr(lineSize, "|")) || (strstr(lineSize, "<")) || (strstr(lineSize, ">")) || (strstr(lineSize, "*")) || (strstr(lineSize, "?")) || (strstr(lineSize, ">>")) || (strstr(lineSize, "|&"))){}
 	return -1;
 }
