@@ -114,7 +114,7 @@ void modifyJobList(){
                   jobsVector.erase(it);
                 }
                 else
-                    perror("wait has failed");
+                   cerr << "wait during MODIFYJOBS has failed" << endl;
             }
         }
     }
@@ -401,20 +401,11 @@ int testQuit(){
              exit(0);
         }
          cerr << "Illegal KILL command!" << endl;
-
+         return 1;
      }
     return 1;
 }
 
-
-
-
- //if (!strcmp(cmd, "quit"))
-
-
-/*
- *
- */
 int testKill(){
     if (!strcmp(cmd, "kill")){
         if (num_arg != 2){
@@ -440,6 +431,7 @@ int testKill(){
             return 1;
         }
         if (kill(currentJob->getPid(), killNum) == -1){
+            cerr << "smash error: > kill" << whichSignal(killNum) << "– cannot send signal" << endl;
             cerr << "smash error: > kill" << args[2] << "– cannot send signal" << endl;
             return 1;
         }
@@ -571,14 +563,22 @@ int testJobs(){
 int Job::jobCount = 0;
 
 
+
+ //if (!strcmp(cmd, "quit"))
+
+
+/*
+ *
+ */
+
+
 //**************************************************************************************
 // function name: ExeExternal
 // Description: executes external command
 // Parameters: external command arguments, external command string
 // Returns: void
 //**************************************************************************************
-void ExeExternal(char *args[MAX_ARG], char* cmdString)
-{
+void ExeExternal(char *args[MAX_ARG], char* cmdString){
     int pID;
         switch(pID = fork())
     {
@@ -628,14 +628,12 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString)
 }
 
 
-int BgCmd(char* lineSize, void* jobs)
-{
+int BgCmd(char* lineSize){
 
     char* Command;
     //char* delimiters = " \t\n";
     char *args[MAX_ARG];
-    if (lineSize[strlen(lineSize)-2] == '&')
-    {
+    if (lineSize[strlen(lineSize)-2] == '&'){
         lineSize[strlen(lineSize)-2] = '\0';
         // Add your code here (execute a in the background)
 
@@ -647,16 +645,14 @@ int BgCmd(char* lineSize, void* jobs)
         if (Command == NULL) return 0;
         
         args[0] = Command;
-        for (i=1; i<MAX_ARG; i++)
-        {
+        for (i=1; i<MAX_ARG; i++){
             args[i] = strtok(NULL, delimiters);
             if (args[i] != NULL)
                 num_arg++;
         }
 
         int pID;
-            switch(pID = fork())
-        {
+            switch(pID = fork()){
                 case -1:
                         // Add your code here (error)
                     std::cerr << "smash error: > " << cmdString << std::endl;
@@ -664,9 +660,8 @@ int BgCmd(char* lineSize, void* jobs)
 
                 case 0 :
                         // Child Process
-                           setpgrp();
-                    //???? when execvp happens it's like a bg cmd??
-                    if (execvp(args[0], args) ==-1){
+                    setpgrp();
+                    if (execvp(args[0], args) ==-1){  //???? when execvp happens it's like a bg cmd??
                         cerr << "you used execvp from bgCMD but failed to exec" << cmdString << endl;
                         if (kill(getpid(), SIGKILL) == -1){
                             cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
@@ -681,7 +676,6 @@ int BgCmd(char* lineSize, void* jobs)
                 return 0;
         }
     }
-
     return -1;
 }
 
@@ -701,7 +695,7 @@ void ctrl_Z_handler(int i){
         sigprocmask(SIG_SETMASK, &old_set, &mask_set);
         return;
     }
-    modifyJobList();
+    modifyJobList(); //unnecassary
     currentJob=findJobPID(fg_pid);
     if (currentJob == NULL){
         Job newJob=Job(fg_cmd, fg_pid, true);
@@ -733,13 +727,16 @@ void ctrl_C_handler(int i){
     }
     
     modifyJobList();
-    currentJob=findJobPID(fg_pid);
-    if (currentJob != NULL){
-        //jobsVector.erase(currentJob);
-    }
-    else{
-        currentJob->setStopped_(true);
-    }
+    /*
+     currentJob=findJobPID(fg_pid);
+     if (currentJob != NULL){
+         //jobsVector.erase(currentJob);
+     }
+     else{
+         currentJob->setStopped_(true);
+     }
+     */
+
     sigprocmask(SIG_SETMASK, &old_set, &mask_set);
     return;
 }
@@ -749,7 +746,9 @@ void ctrl_C_handler(int i){
 /*
  * tests of draft
  */
-int main(int argc, const char * argv[]) {
+
+
+int mainWhy(int argc, const char * argv[]) {
    
 
     
@@ -793,8 +792,17 @@ int main(int argc, const char * argv[]) {
         it->printJob();
     
     
-    signal(SIGTSTP,cnt_z_handler);
-    signal(SIGINT,cnt_c_handler);
+    struct sigaction actTSTP;
+    struct sigaction actINT;
+    
+    actTSTP.sa_handler = &ctrl_Z_handler;
+    actINT.sa_handler = &ctrl_C_handler;
+
+    sigaction(SIGTSTP, &actTSTP, NULL);
+    sigaction(SIGINT, &actINT, NULL);
+ 
+    
+
     
     /*
     set(lineSize);
@@ -811,6 +819,7 @@ int main(int argc, const char * argv[]) {
 
     return 0;
 }
+
 
 
 /* **** STOI test

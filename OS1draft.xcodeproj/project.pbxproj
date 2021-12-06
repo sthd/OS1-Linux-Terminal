@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		535581E2275E7A32001B18A3 /* commands.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 535581DD275E7A32001B18A3 /* commands.cpp */; };
+		535581E3275E7A32001B18A3 /* signals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 535581DE275E7A32001B18A3 /* signals.cpp */; };
+		535581E4275E7A32001B18A3 /* smash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 535581E0275E7A32001B18A3 /* smash.cpp */; };
+		535581E7275E9D2D001B18A3 /* job.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 535581E6275E9D2D001B18A3 /* job.cpp */; };
 		53904050274C3E9500C10CF5 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5390404F274C3E9500C10CF5 /* main.cpp */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +27,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		535581DD275E7A32001B18A3 /* commands.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = commands.cpp; sourceTree = "<group>"; };
+		535581DE275E7A32001B18A3 /* signals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = signals.cpp; sourceTree = "<group>"; };
+		535581DF275E7A32001B18A3 /* commands.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = commands.h; sourceTree = "<group>"; };
+		535581E0275E7A32001B18A3 /* smash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smash.cpp; sourceTree = "<group>"; };
+		535581E1275E7A32001B18A3 /* signals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = signals.h; sourceTree = "<group>"; };
+		535581E5275E9D2D001B18A3 /* job.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = job.h; sourceTree = "<group>"; };
+		535581E6275E9D2D001B18A3 /* job.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = job.cpp; sourceTree = "<group>"; };
+		535581E8275E9F3B001B18A3 /* includes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = includes.h; sourceTree = "<group>"; };
 		5390404C274C3E9500C10CF5 /* OS1draft */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = OS1draft; sourceTree = BUILT_PRODUCTS_DIR; };
 		5390404F274C3E9500C10CF5 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -57,7 +69,15 @@
 		5390404E274C3E9500C10CF5 /* OS1draft */ = {
 			isa = PBXGroup;
 			children = (
+				535581E8275E9F3B001B18A3 /* includes.h */,
 				5390404F274C3E9500C10CF5 /* main.cpp */,
+				535581E5275E9D2D001B18A3 /* job.h */,
+				535581E6275E9D2D001B18A3 /* job.cpp */,
+				535581DF275E7A32001B18A3 /* commands.h */,
+				535581DD275E7A32001B18A3 /* commands.cpp */,
+				535581E1275E7A32001B18A3 /* signals.h */,
+				535581DE275E7A32001B18A3 /* signals.cpp */,
+				535581E0275E7A32001B18A3 /* smash.cpp */,
 			);
 			path = OS1draft;
 			sourceTree = "<group>";
@@ -119,7 +139,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				535581E3275E7A32001B18A3 /* signals.cpp in Sources */,
 				53904050274C3E9500C10CF5 /* main.cpp in Sources */,
+				535581E4275E7A32001B18A3 /* smash.cpp in Sources */,
+				535581E7275E9D2D001B18A3 /* job.cpp in Sources */,
+				535581E2275E7A32001B18A3 /* commands.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
