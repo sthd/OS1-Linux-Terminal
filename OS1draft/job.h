@@ -18,7 +18,9 @@ class Job{
         serial_ =jobCount++;
         time_=(time(NULL));
     }
-    
+    ~Job(){
+        pid_ = -2;
+    };
     int getSerial(){return serial_;}
 
     string getCommand(){return command_;}

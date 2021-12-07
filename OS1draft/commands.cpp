@@ -69,24 +69,37 @@ int i = 0;
 int num_arg = 0;
 
 
+    //cout << "The size is: " << jobsVector.size() << endl;
+
 void modifyJobList(){
     pid_t wait;
     int status;
+
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
-        wait = waitpid(it->getPid(), &status, WNOHANG | WUNTRACED);
-        if (wait > 0){
-            if ( WIFEXITED(status) || WIFSIGNALED(status) ) {
-                jobsVector.erase(it);
+        if(it->getPid()!=-2){
+            cout << "give me your pid" << it->getPid() << endl;
+            wait = waitpid(it->getPid(), &status, WNOHANG | WUNTRACED); //  ls& //
+            if (wait > 0){
+                cout << "entered wait > 0"<< endl;
+                if ( WIFEXITED(status) || WIFSIGNALED(status) ){
+                    cout <<"before " << jobsVector.size() << endl;
+                    jobsVector.erase(it);
+                    cout <<"after " << jobsVector.size() << endl;
+                    cout << "erased because of the status"<< endl;
+                    cout << "noticed that it still holds" << it->getPid() << endl;
+                }
+
             }
             else if (wait == -1){
-                if (errno == ECHILD){
-                  jobsVector.erase(it);
-                }
+                cout << "entered wait == -1"<< endl;
+                if (errno == ECHILD)
+                    jobsVector.erase(it);
                 else
-                   cerr << "wait during MODIFYJOBS has failed" << endl;
-            }
+                    cerr << "wait during MODIFYJOBS has failed" << endl;
+             }
         }
     }
+     cout << "Finished modifyJobList" << endl;
 }
 
 Job* findJobSerial(int serial){
@@ -239,10 +252,21 @@ int ExeCmd(char* lineSize, char* cmdString){
             return 1;
         }
         //need to add modify jobs
-        modifyJobList();
-        for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it)
+        //modifyJobList();
+        int i=0;
+        std::vector<Job>::iterator it=jobsVector.begin();
+        
+        while (it != jobsVector.end()){
             it->printJob();
+            //jobsVector.erase(it);
+            ++it;
+            cout << i << " ";
+        }
+        cout << " the end" << endl;
 	}
+    
+    
+    
 	/*************************************************/
 	else if (!strcmp(cmd, "showpid")){
         if(num_arg > 0){
