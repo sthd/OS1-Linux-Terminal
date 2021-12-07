@@ -186,15 +186,28 @@ int ExeCmd(char* lineSize, char* cmdString){
             strcpy(nextPwd, args[1]);
         }
         //nextPwd is either oldPwd or args[1]
-        
-        strcpy(tmpPwd, getcwd(NULL, 0)); //tmpPwd <- current directory
+        //char* buffCWD=NULL;
+        //buffCWD = getcwd(buffCWD, 0);
+        //if (buffCWD == NULL){
+        //    perror("falied to retreive current working directory\n");
+        //    return 1;
+        //}
+        //cout << buffCWD << endl;
+        //free(buffCWD);
+        char* buffCD=NULL;
+        buffCD =getcwd(buffCD, 0);
+        strcpy(tmpPwd, buffCD); //tmpPwd <- current directory
         if(chdir(nextPwd) == -1){
             cerr << " \"" << nextPwd << "\" - No such file or directory\n" << endl;
+            free(buffCD);
             return 1;
         }
-        char* current = getcwd(NULL, 0);
-        cout << current << endl;
+        free(buffCD);
+        char* buffAgain=NULL;
+        buffAgain = getcwd(buffAgain, 0);
+        cout << buffAgain << endl;
         strcpy(oldPwd, tmpPwd); //enter last cwd into oldPwd
+        free(buffAgain);
         return 0;
 	} 
 	
@@ -204,22 +217,13 @@ int ExeCmd(char* lineSize, char* cmdString){
             perror("Too many parameters!\n");
             return 1;
         }
-        //char curry[MAX_LINE_SIZE];
-        //getcwd(curry, 0);
+
         char* buffCWD=NULL;
         buffCWD = getcwd(buffCWD, 0);
-        //char* current = getcwd(buffCWD, 0);
-        
-         //if (strlen(curry) == 0){
-        //if (current == NULL){
         if (buffCWD == NULL){
             perror("falied to retreive current working directory\n");
-            
-            //free(current);
             return 1;
         }
-        //cout << curry << endl;
-        //cout << current << endl;
         cout << buffCWD << endl;
         free(buffCWD);
         return 0;
