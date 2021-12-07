@@ -20,7 +20,7 @@ main file. This file contains the main function of smash
 #define MAXARGS 20
 
 
-char* L_Fg_Cmd;
+//char* L_Fg_Cmd;
 //void* jobs = NULL; //This represents the list of jobs. Please change to a preferred type (e.g array of char*)
 char lineSize[MAX_LINE_SIZE];
 
@@ -43,14 +43,16 @@ int main(int argc, char *argv[]){
     actTSTP.sa_handler = &ctrl_Z_handler;
     actINT.sa_handler = &ctrl_C_handler;
 
+    
     sigaction(SIGTSTP, &actTSTP, NULL);
     sigaction(SIGINT, &actINT, NULL);
     char cmdString[MAX_LINE_SIZE]; 	   
 	
-	L_Fg_Cmd =(char*)malloc(sizeof(char)*(MAX_LINE_SIZE+1));
-	if (L_Fg_Cmd == NULL) 
-			exit (-1); 
-	L_Fg_Cmd[0] = '\0';
+	//L_Fg_Cmd =(char*)malloc(sizeof(char)*(MAX_LINE_SIZE+1));
+    //char L_Fg_Cmd[MAX_LINE_SIZE+1];
+	//if (L_Fg_Cmd == NULL)
+	//		exit (-1);
+	//L_Fg_Cmd[0] = '\0';
 	
     	while (1)
     	{
@@ -77,6 +79,7 @@ int main(int argc, char *argv[]){
 
         
 	}
+    //free(L_Fg_Cmd);
     return 0;
 }
 

@@ -137,14 +137,25 @@ int ExeCmd(char* lineSize, char* cmdString){
 			num_arg++; 
  
 	}
+ 
     
     if (cmdHistory.size() == MAXHISTORY ){
         cmdHistory.pop_front();
     }
-    char tmpy[MAX_LINE_SIZE];
-    strcpy(tmpy, cmdString);
-    tmpy[strlen(lineSize)]='\0';
-    cmdHistory.push_back(tmpy);
+    char tmpy[MAX_LINE_SIZE]="";
+    strcpy(tmpy, cmdString); //strcpy(char[] , char*)
+    cmdHistory.push_back(string(tmpy));
+    
+    //char victim[MAX_LINE_SIZE]="waterxnsdia";
+    //strcpy(victim, cmdString);
+    //cout << victim << endl;
+    //cmdHistory.push_back(victim);
+
+    //std::list<string>::iterator ity=cmdHistory.end();
+    //std::cout << *ity << endl;
+    
+    
+
 /*************************************************/
 // Built in Commands PLEASE NOTE NOT ALL REQUIRED
 // ARE IN THIS CHAIN OF IF COMMANDS. PLEASE ADD
@@ -152,16 +163,19 @@ int ExeCmd(char* lineSize, char* cmdString){
 /*************************************************/
 	if (!strcmp(cmd, "cd") ){
         if (num_arg == 0){
-            perror("Not enough parameters!\n");
+            //perror("Not enough parameters!\n");
+            cerr << "Not enough parameters!\n" << endl;
             return 1;
         }
         else if(num_arg > 1){
-            perror("Too many parameters!\n");
+            //perror("Too many parameters!\n");
+            cerr << "Too many parameters!\n" << endl;
             return 1;
         }
         if(!strcmp(args[1], dash)){  //enter if parameter is '-'
             if (strlen(oldPwd) == 0){
-                perror("No such file or directory\n"); //do we need a \n
+                //perror("No such file or directory\n"); //do we need a \n
+                cerr << "No such file or directory\n" << endl; //do we need a \n
                 return 1;
             }
             else{
@@ -190,13 +204,24 @@ int ExeCmd(char* lineSize, char* cmdString){
             perror("Too many parameters!\n");
             return 1;
         }
+        //char curry[MAX_LINE_SIZE];
+        //getcwd(curry, 0);
+        char* buffCWD=NULL;
+        buffCWD = getcwd(buffCWD, 0);
+        //char* current = getcwd(buffCWD, 0);
         
-        char* current = getcwd(NULL, 0);
-        if (current == NULL){
+         //if (strlen(curry) == 0){
+        //if (current == NULL){
+        if (buffCWD == NULL){
             perror("falied to retreive current working directory\n");
+            
+            //free(current);
             return 1;
         }
-        cout << current << endl;
+        //cout << curry << endl;
+        //cout << current << endl;
+        cout << buffCWD << endl;
+        free(buffCWD);
         return 0;
 	}
 	
