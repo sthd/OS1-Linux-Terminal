@@ -69,38 +69,52 @@ int i = 0;
 int num_arg = 0;
 
 
-    //cout << "The size is: " << jobsVector.size() << endl;
+
 
 void modifyJobList(){
     pid_t wait;
     int status;
 
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
-        if(it->getPid()!=-2){
-            cout << "give me your pid" << it->getPid() << endl;
-            wait = waitpid(it->getPid(), &status, WNOHANG | WUNTRACED); //  ls& //
-            if (wait > 0){
-                cout << "entered wait > 0"<< endl;
-                if ( WIFEXITED(status) || WIFSIGNALED(status) ){
-                    cout <<"before " << jobsVector.size() << endl;
-                    jobsVector.erase(it);
-                    cout <<"after " << jobsVector.size() << endl;
-                    cout << "erased because of the status"<< endl;
-                    cout << "noticed that it still holds" << it->getPid() << endl;
-                }
-
+        cout << "give me your pid" << it->getPid() << endl;
+        wait = waitpid(it->getPid(), &status, WNOHANG | WUNTRACED); //  //it->getPid()
+        cout << "Waitpid returns: " << wait << endl;
+        //if (wait == -1){
+        //    cout << "Waitpid return -1 on ModifyJob" << endl;
+            //return;
+        //}
+        if (wait > 0){
+            cout << "entered wait > 0"<< endl;
+            if ( WIFEXITED(status) || WIFSIGNALED(status) ){
+                cout <<"before erasing size is:" << jobsVector.size();
+                jobsVector.erase(it);
+                --it;
+                cout <<"  and after it is: " << jobsVector.size() << endl;
+                //cout << "iteartor points now to: " << it->getPid() << endl;
             }
-            else if (wait == -1){
-                cout << "entered wait == -1"<< endl;
-                if (errno == ECHILD)
-                    jobsVector.erase(it);
-                else
-                    cerr << "wait during MODIFYJOBS has failed" << endl;
-             }
+            else{
+                cout << "Process in modify has STOPPED!" << endl;
+            }
+        }
+        else if (wait == 0){
+            cout << "Process in modify is run run run!" << endl;
         }
     }
      cout << "Finished modifyJobList" << endl;
 }
+
+    //cout << "The size is: " << jobsVector.size() << endl;
+
+/*
+ else if (wait == -1){
+     cout << "entered wait == -1"<< endl;
+     if (errno == ECHILD)
+         jobsVector.erase(it);
+     else
+         cerr << "wait during MODIFYJOBS has failed" << endl;
+  }
+
+ */
 
 Job* findJobSerial(int serial){
     //modifyJobList();
@@ -252,15 +266,15 @@ int ExeCmd(char* lineSize, char* cmdString){
             return 1;
         }
         //need to add modify jobs
-        //modifyJobList();
-        int i=0;
+        modifyJobList();
+        //int i=0;
+        //cout << i << " ";
         std::vector<Job>::iterator it=jobsVector.begin();
         
         while (it != jobsVector.end()){
             it->printJob();
             //jobsVector.erase(it);
             ++it;
-            cout << i << " ";
         }
         cout << " the end" << endl;
 	}
@@ -552,40 +566,36 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString){
 	int pID;
     	switch(pID = fork()){
                 case -1:
-                        // Add your code here (error)
-                        cerr << "smash error: > " << cmdString << endl;
+                // Add your code here (error)
+                cerr << "smash error: > " << cmdString << endl;
                 return;
-                        /*
-                        your code
-                        */
+                
                 case 0 :
-                        // Child Process
-                           setpgrp();
+                //Child Process
+                setpgrp();
+                cout << "I am SON with pid: " << pID << endl;
                 if (execvp(args[0], args) ==-1){
                     cerr << "you used execvp from ExeExternal but failed to exec" << cmdString << endl;
                     if (kill(getpid(), SIGKILL) == -1){
                         cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
                         cerr << "CHECK!! sigKILL falied! " << endl;
-                        return;
+                    return;
                     }
                 }
-            
-                        // Add your code here (execute an external command)
-                        
-                        /*
-                        your code
-                        */
+                return;
                 
                 default:
                 fg_pid=pID;
                 fg_cmd=cmdString;
-               if (waitpid(fg_pid, NULL, WUNTRACED) ==-1){
+                int status;
+                if (waitpid(fg_pid, &status, WUNTRACED) ==-1){
                     //assigned NULL for status so we can run
-                     cerr << "waitpid for child ExeCVP failed" << endl;
-                    return;
+                    cerr << "waitpid for child ExeCVP failed with: " << status << endl;
+                    //return;
                 }
+                cout << "I am DAD with pid: " << pID << endl;
                 fg_pid=0;
-                fg_cmd = "SMASH";
+                fg_cmd = "smash";
                 return;
         }
 }
