@@ -31,7 +31,7 @@ void ctrl_Z_handler(int i){
         sigprocmask(SIG_SETMASK, &old_set, &mask_set);
         return;
     }
-    modifyJobList(); //unnecassary
+    //modifyJobList(); //unnecassary
     currentJob=findJobPID(fg_pid);
     if (currentJob == NULL){
         Job newJob=Job(fg_cmd, fg_pid, true);

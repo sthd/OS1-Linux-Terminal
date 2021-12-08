@@ -31,28 +31,49 @@ string fg_cmd;
 
 Job* currentJob;
 
+
+void catch_int(int sig_num) {
+
+}
+
 //**************************************************************************************
 // function name: main
 // Description: main function of smash. get command from user and calls command functions
 //**************************************************************************************
 int main(int argc, char *argv[]){
     
+    //struct sigaction new_action, old_action;
+
+    /* Set up the structure to specify the new action. */
+    //new_action.sa_handler = termination_handler;
+    //L_Fg_Cmd =(char*)malloc(sizeof(char)*(MAX_LINE_SIZE+1));
+    //char L_Fg_Cmd[MAX_LINE_SIZE+1];
+    //if (L_Fg_Cmd == NULL)
+    //        exit (-1);
+    //L_Fg_Cmd[0] = '\0';
+
+    
+    //struct sigaction act;
+    //act.sa_handler = &catch_int;
+    //sigaction(SIGINT, &act, NULL);
     struct sigaction actTSTP;
     struct sigaction actINT;
     
-    actTSTP.sa_handler = &ctrl_Z_handler;
-    actINT.sa_handler = &ctrl_C_handler;
 
     
+    sigemptyset (&actTSTP.sa_mask);
+    actTSTP.sa_flags = 0;
+    sigemptyset (&actINT.sa_mask);
+    actINT.sa_flags = 0;
+    
+    actTSTP.sa_handler = &ctrl_Z_handler;
+    actINT.sa_handler = &ctrl_C_handler;
+    
     sigaction(SIGTSTP, &actTSTP, NULL);
-    sigaction(SIGINT, &actINT, NULL);
+    sigaction(SIGINT, &actINT, NULL); //ctrlC
     char cmdString[MAX_LINE_SIZE]; 	   
 	
-	//L_Fg_Cmd =(char*)malloc(sizeof(char)*(MAX_LINE_SIZE+1));
-    //char L_Fg_Cmd[MAX_LINE_SIZE+1];
-	//if (L_Fg_Cmd == NULL)
-	//		exit (-1);
-	//L_Fg_Cmd[0] = '\0';
+
 	
     	while (1)
     	{

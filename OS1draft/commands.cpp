@@ -77,12 +77,20 @@ void modifyJobList(){
 
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
         cout << "give me your pid" << it->getPid() << endl;
+        //cout << "parent pid" << it->getPid() << endl;
+        if (it->isStopped_() == true)
+            continue;
         wait = waitpid(it->getPid(), &status, WNOHANG | WUNTRACED); //  //it->getPid()
         cout << "Waitpid returns: " << wait << endl;
-        //if (wait == -1){
-        //    cout << "Waitpid return -1 on ModifyJob" << endl;
-            //return;
-        //}
+        if (wait == -1){
+            cout << "entered wait == -1"<< endl;
+            if (errno == ECHILD){
+                jobsVector.erase(it);
+                --it;
+            }
+            else
+                cerr << "wait during MODIFYJOBS has failed" << endl;
+        }
         if (wait > 0){
             cout << "entered wait > 0"<< endl;
             if ( WIFEXITED(status) || WIFSIGNALED(status) ){
@@ -316,6 +324,7 @@ int ExeCmd(char* lineSize, char* cmdString){
                 currentJob = &(*rit);
             }
         }
+        currentJob->printJob();
         //update the command to run in FG.
         //use the command pid to actually run it over smash
         
@@ -332,11 +341,12 @@ int ExeCmd(char* lineSize, char* cmdString){
         cout << currentJob->getCommand() << endl;
         if (waitpid(fg_pid, NULL, WUNTRACED) ==-1){
             //assigned NULL for status so we can run
-             cerr << "waitpid for FG failed" << endl;
+             cerr << "waitpid for FG failed at fgcmd with: " << fg_pid << endl;
             return 1;
         }
+        modifyJobList();
         fg_pid=0;
-        fg_cmd = "SMASH";
+        fg_cmd = "smash";
         return 0;
         // !!CHECK: need to print sig cont etc
 	} 
@@ -588,9 +598,13 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString){
                 fg_pid=pID;
                 fg_cmd=cmdString;
                 int status;
-                if (waitpid(fg_pid, &status, WUNTRACED) ==-1){
+                int wait = waitpid(pID, &status, WUNTRACED);
+                //modifyJobList();
+                cout << "wait value is: " << wait << endl;
+                
+                if (wait ==-1){
                     //assigned NULL for status so we can run
-                    cerr << "waitpid for child ExeCVP failed with: " << status << endl;
+                    cerr << "waitpid for child ExeCVP failed with: "  << endl;
                     //return;
                 }
                 cout << "I am DAD with pid: " << pID << endl;
