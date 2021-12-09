@@ -13,15 +13,18 @@ extern int fg_pid;
 extern string fg_cmd;
 extern Job* currentJob;
 extern vector<Job> jobsVector;
-
+extern int Daddy;
 
 /*
 * ****CHECK when to modify - might be a problem with kill
 */
 
 void ctrl_Z_handler(int i){
-    if (fg_pid <= 0)
-        return;
+    cout << "my real pid" << getpid() << " and fg is:" << fg_pid << endl;
+    //int killme = ;
+    if (getpid() != Daddy) return;
+    //if (fg_pid <= 0)
+    //    return;
     sigset_t mask_set;
     sigset_t old_set;
     sigfillset(&mask_set);

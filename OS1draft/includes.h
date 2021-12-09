@@ -29,6 +29,13 @@ using namespace std::chrono; // nanoseconds, system_clock, seconds
 using namespace std;
 
 
-
 #endif
+/*
+ char victim[MAX_LINE_SIZE]="waterxnsdia";
+ strcpy(victim, cmdString);
+ cout << victim << endl;
+ cmdHistory.push_back(victim);
+ std::list<string>::iterator ity=cmdHistory.end();
+ std::cout << *ity << endl;
 
+ */

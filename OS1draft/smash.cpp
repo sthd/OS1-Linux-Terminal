@@ -34,14 +34,16 @@ Job* currentJob;
 
 void catch_int(int sig_num) {
 
-}
 
+}
+int Daddy;
 //**************************************************************************************
 // function name: main
 // Description: main function of smash. get command from user and calls command functions
 //**************************************************************************************
 int main(int argc, char *argv[]){
-    
+    Daddy = getpid();
+    //cout << Daddy << endl;
     //struct sigaction new_action, old_action;
 
     /* Set up the structure to specify the new action. */

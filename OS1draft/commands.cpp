@@ -179,18 +179,9 @@ int ExeCmd(char* lineSize, char* cmdString){
     }
     char tmpy[MAX_LINE_SIZE]="";
     strcpy(tmpy, cmdString); //strcpy(char[] , char*)
-    cmdHistory.push_back(string(tmpy));
+    if (strcmp(tmpy, "history"))
+        cmdHistory.push_back(string(tmpy));
     
-    //char victim[MAX_LINE_SIZE]="waterxnsdia";
-    //strcpy(victim, cmdString);
-    //cout << victim << endl;
-    //cmdHistory.push_back(victim);
-
-    //std::list<string>::iterator ity=cmdHistory.end();
-    //std::cout << *ity << endl;
-    
-    
-
 /*************************************************/
 // Built in Commands PLEASE NOTE NOT ALL REQUIRED
 // ARE IN THIS CHAIN OF IF COMMANDS. PLEASE ADD
@@ -490,10 +481,6 @@ int ExeCmd(char* lineSize, char* cmdString){
         else if ( (killNum == SIGKILL) || (killNum == SIGTERM) ){
             modifyJobList();
         }
-
-        
-        for (std::list<string>::iterator it=cmdHistory.begin(); it != cmdHistory.end(); ++it)
-          std::cout << *it << endl;
         return 0;
         
     }
@@ -583,7 +570,7 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString){
                 case 0 :
                 //Child Process
                 setpgrp();
-                cout << "I am SON with pid: " << pID << endl;
+                cout << "I am SON with pid: " << pID << " and my fg is: " << fg_pid << endl;
                 if (execvp(args[0], args) ==-1){
                     cerr << "you used execvp from ExeExternal but failed to exec" << cmdString << endl;
                     if (kill(getpid(), SIGKILL) == -1){
@@ -598,15 +585,20 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString){
                 fg_pid=pID;
                 fg_cmd=cmdString;
                 int status;
-                int wait = waitpid(pID, &status, WUNTRACED);
-                //modifyJobList();
-                cout << "wait value is: " << wait << endl;
                 
-                if (wait ==-1){
-                    //assigned NULL for status so we can run
-                    cerr << "waitpid for child ExeCVP failed with: "  << endl;
-                    //return;
-                }
+                cout << " I did'nt wait just yet" << endl;
+                waitpid(pID, &status, WUNTRACED);
+                //modifyJobList();
+                /*
+                 int wait =
+                 if (wait ==-1){
+                     //assigned NULL for status so we can run
+                     cerr << "waitpid for child ExeCVP failed with: "  << endl;
+                     //return;
+                 }
+                 cout << "wait value is: " << wait << endl;
+                 */
+                
                 cout << "I am DAD with pid: " << pID << endl;
                 fg_pid=0;
                 fg_cmd = "smash";
