@@ -39,3 +39,26 @@ using namespace std;
  std::cout << *ity << endl;
 
  */
+
+
+/*
+    cout << "I slept for ";
+    sleep_for(seconds(1));
+    cout << " 1";
+    sleep_for(seconds());
+    cout << " 2";
+    sleep_for(seconds(1));
+    cout << " 3";
+    sleep_for(seconds(1));
+    cout << " 4";
+    sleep_for(seconds(1));
+    cout << "   5 seconds " << endl;
+ */
+
+/*
+    if args[1] == kill we return 1
+    go through jobs
+    send sigterm to each job
+    check if job terminated
+ */
+

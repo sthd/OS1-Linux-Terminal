@@ -391,41 +391,47 @@ int ExeCmd(char* lineSize, char* cmdString){
 	}
 	/*************************************************/
 	else if (!strcmp(cmd, "quit")){
-         if (num_arg > 1){
+        if (num_arg > 1){
             cerr << "smash error: > too many argument for quit" << endl;
             return 1;
-         }
-         if (num_arg == 0){
+        }
+        if (num_arg == 0){
             exit(0);
-         }
-         //if args[1] == kill we return 1
-         modifyJobList();
-         if (num_arg ==1 && (!strcmp(args[1], "kill") ) ){
-            //go through jobs
-            //send sigterm to each job
-            //check if job terminated
+        }
+
+        modifyJobList();
+        if (num_arg ==1 && (!strcmp(args[1], "kill") ) ){
              for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
                  if (kill(it->getPid(), SIGTERM) == -1){
                      cerr << "smash error: > kill" << it->getSerial() << "– cannot send signal\n" << endl;
                      return 1; //system call failed!
                  }
                  cout << "[" << it->getSerial() << "] " << it->getCommand() << " - Sending SIGTERM... "; //flush?
-                 sleep_for(seconds(5));
-                 int wait = waitpid(it->getPid(), NULL, WNOHANG);
-                 if (wait < 0){
-                     cerr << "smash error: > wait for child failed" << endl;
-                     return 1;
+                 int wait=0;
+                 int i=1;
+                 for (i=1; i<6; i++){
+                     
+                     wait = waitpid(it->getPid(), NULL, WNOHANG);
+                     if (wait < 0){
+                         cerr << "smash error: > wait for child failed" << endl;
+                         return 1; //perhaps exit(1)
+                     }
+                     if (wait > 0){
+                         cout << "Done" <<endl;
+                         break;
+                     }
+                     sleep_for(seconds(1));
                  }
-                 if (wait > 0){
-                     cout << "Done" <<endl;
-                 }
+                 cout << "I slept for " << i-1 << "seconds! " << endl;
                  if (wait == 0){
+                     
                      if (kill(it->getPid(), SIGKILL) == -1){
                          cerr << "smash error: > kill" << it->getSerial() << "– cannot send signal\n" << endl;
                          return 1; //system call failed!
                      }
                      cout << " (5 sec passed) Sending SIGKILL... Done" << endl;
                  }
+
              }
              exit(0);
         }
@@ -485,59 +491,75 @@ int ExeCmd(char* lineSize, char* cmdString){
         
     }
     
+    
+    
+    
+    
+    
     else if (!strcmp(cmd, "diff")){
-         int file1, file2;
-         ssize_t bytesRead1, bytesRead2;
-         const int nbytes=1;
-         
-         file1 = open(args[1], O_RDONLY);
-         if (file1 == -1){
-             cerr << "FILE1 ERROR: No such file or directory" << endl;
-             return 1;
-         }
-         file2 = open(args[2], O_RDONLY);
-         if (file2 == -1){
-             if (close(file1) == -1){
+        int file1, file2;
+        ssize_t bytesRead1, bytesRead2;
+        const int nbytes=1;
+        
+        file1 = open(args[1], O_RDONLY);
+        if (file1 == -1){
+            cerr << "FILE1 ERROR: No such file or directory" << endl;
+            return 1;
+        }
+        file2 = open(args[2], O_RDONLY);
+        if (file2 == -1){
+            if (close(file1) == -1){
                 cerr << "FILE1 ERROR: close file failed!" << endl;
-             }
-             cerr << "FILE2 ERROR: No such file or directory" << endl;
-             return 1;
-         }
-         
-         char* buff1 = NULL;
-         char* buff2 = NULL;
-         bytesRead1 = read(file1, buff1, nbytes);
-         bytesRead2 = read(file2, buff2, nbytes);
-         while(bytesRead1!=0 || bytesRead2!=0){
-             if(bytesRead1==-1 || bytesRead2==-1){
-                cerr << "Unable to read file" << endl;
-                 if (close(file1) == -1 || close(file2) == -1  ){
-                     cerr << "FILE ERROR: close file failed!" << endl;
-                     return 1;
-                 }
-             }
-             if (bytesRead1==0 || bytesRead2==0){
-                 cout << "1" <<endl;
-                 if (close(file1) == -1 || close(file2) == -1  ){
-                     cerr << "FILE ERROR: close file failed!" << endl;
-                     return 1;
-                 }
-                 return 0;
-             }
-             if (*buff1!=*buff2){
-                 cout << "1" <<endl;
-                     if (close(file1) == -1 || close(file2) == -1  ){
-                         cerr << "FILE ERROR: close file failed!" << endl;
-                         return 1;
-                     }
-                     return 0;
             }
-             bytesRead1 = read(file1, buff1, nbytes);
-             bytesRead2 = read(file2, buff2, nbytes);
-             
-         }
-         cout << "0" <<endl;
-         if (close(file1) == -1 || close(file2) == -1  ){
+            cerr << "FILE2 ERROR: No such file or directory" << endl;
+            return 1;
+        }
+        
+        char buff1 = 'a';
+        char buff2 = 'a';
+
+        bytesRead1 = read(file1, &buff1, nbytes);
+        bytesRead2 = read(file2, &buff2, nbytes);
+        cout << bytesRead1 << endl; //legal but -1
+        //cout << buff1 << endl; // illegal when bytesread is -1
+        cout << buff1 << endl; // illegal when bytesread is -1
+        cout << "bytes read2: " << bytesRead2 <<"  buff2 is: " << buff2 << " " << buff2 <<endl;
+        cout << "about to go into while and closed :" << file1 <<endl;
+        
+        while(bytesRead1!=0 || bytesRead2!=0){
+            cout << "Started While" <<endl;
+            if(bytesRead1==-1 || bytesRead2==-1){
+                cerr << "Unable to read file" << endl;
+                if (close(file1) == -1 || close(file2) == -1  ){
+                    cerr << "FILE ERROR: close file failed!" << endl;
+                    return 1;
+                }
+            }
+            if (bytesRead1==0 || bytesRead2==0){
+                cout << "One readis 0! i.e. EOF" <<endl;
+                cout << "1" <<endl;
+                if (close(file1) == -1 || close(file2) == -1  ){
+                    cerr << "FILE ERROR: close file failed!" << endl;
+                    return 1;
+                }
+                return 0;
+            }
+            if (buff1!=buff2){
+                cout << "read is EQUAL until now " <<endl;
+                cout << "1" <<endl;
+                if (close(file1) == -1 || close(file2) == -1  ){
+                    cerr << "FILE ERROR: close file failed!" << endl;
+                    return 1;
+                }
+                return 0;
+            }
+            cout << "about to read again" <<endl;
+            bytesRead1 = read(file1, &buff1, nbytes);
+            bytesRead2 = read(file2, &buff2, nbytes);
+            cout << "I read again and about to check while terms" <<endl;
+        }
+        cout << "0" <<endl;
+        if (close(file1) == -1 || close(file2) == -1  ){
             cerr << "FILE ERROR: close file failed!" << endl;
             return 1;
         }
