@@ -62,3 +62,52 @@ using namespace std;
     check if job terminated
  */
 
+/*
+    nextPwd is either oldPwd or args[1]
+    char* buffCWD=NULL;
+    buffCWD = getcwd(buffCWD, 0);
+    if (buffCWD == NULL){
+        perror("falied to retreive current working directory\n");
+        return 1;
+    }
+    cout << buffCWD << endl;
+    free(buffCWD);
+ 
+ */
+
+
+    //cout << "The size is: " << jobsVector.size() << endl;
+
+/*
+ else if (wait == -1){
+     cout << "entered wait == -1"<< endl;
+     if (errno == ECHILD)
+         jobsVector.erase(it);
+     else
+         cerr << "wait during MODIFYJOBS has failed" << endl;
+  }
+ */
+
+
+
+/* **diff notes
+ 
+ //cout << bytesRead1 << endl; //legal but -1
+//cout << buff1 << endl; // illegal when bytesread is -1
+//cout << buff1 << endl; // illegal when bytesread is -1
+//cout << "bytes read2: " << bytesRead2 <<"  buff2 is: " << buff2 << " " << buff2 <<endl;
+//cout << "about to go into while and closed :" << file1 <<endl;
+//
+ 
+ */
+
+
+/***ExeExternal notes
+ int wait =0;
+ if (wait ==-1){
+     //assigned NULL for status so we can run
+     cerr << "waitpid for child ExeCVP failed with: "  << endl;
+     //return;
+ }
+ cout << "wait value is: " << wait << endl;
+ */

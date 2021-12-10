@@ -87,13 +87,12 @@ int main(int argc, char *argv[]){
         // perform a complicated Command
 		if(!ExeComp(lineSize)) continue;
             
-            
         // background command
 	 	if(!BgCmd(lineSize)) continue;
-            
+            cout << lineSize << "here" << endl;
         // built in commands
 		ExeCmd(lineSize, cmdString);
-		
+            
 		/* initialize for next line read*/
 		lineSize[0]='\0';
 		cmdString[0]='\0';
