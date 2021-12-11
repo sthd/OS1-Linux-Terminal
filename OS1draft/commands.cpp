@@ -438,7 +438,7 @@ int ExeCmd(char* lineSize, char* cmdString){
         modifyJobList();
         Job* currentJob = findJobSerial(stoi(args[2]));
         if (currentJob == NULL){
-            cerr << "smash error: > kill" << args[2] << "– job does not exist" << endl;
+            cerr << "smash error: > kill" << args[2] << " – job does not exist" << endl;
             return 1;
         }
         
@@ -456,8 +456,8 @@ int ExeCmd(char* lineSize, char* cmdString){
             return 1;
         }
         if (kill(currentJob->getPid(), killNum) == -1){
-            cerr << "smash error: > kill" << whichSignal(killNum) << "– cannot send signal" << endl;
-            cerr << "smash error: > kill" << args[2] << "– cannot send signal" << endl;
+            cerr << "smash error: > kill" << whichSignal(killNum) << " – cannot send signal" << endl;
+            cerr << "smash error: > kill" << args[2] << " – cannot send signal" << endl;
             return 1;
         }
         if ( (killNum == SIGSTOP) || (killNum == SIGTSTP) ){
@@ -565,7 +565,7 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString){
                     printf("smash error: > \"%s\"\n", cmdString);
                     if (kill(getpid(), SIGKILL) == -1){
                         //cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
-                        cerr << "smash error: > kill" << args[2] << "– cannot send signal" << endl;
+                        cerr << "smash error: > kill SIGKILL" << " – cannot send signal" << endl; //SIGKILL = 9 
                     return;
                     }
                 }
@@ -607,64 +607,58 @@ int ExeComp(char* lineSize){
 int BgCmd(char* lineSize){
     char* Command;
     char *args[MAX_ARG];
-
-    // ./tW    &     *   &
-    char* comedy;
-    char c1[MAX_LINE_SIZE]="";
-    strcpy(c1, lineSize);
-    comedy = strtok(c1, "&");
-    if (comedy == NULL ) //no ampersand at all
-        return -1;
+    char cmdString[MAX_LINE_SIZE];
+    strcpy(cmdString, lineSize);
+    long size = strlen(lineSize) -2;
+    long loc;
+    for (loc=size; loc>0; loc--){
+        if ((lineSize[loc] != '&') && (lineSize[loc] !=' ' ) )
+            return -1;
+        else if (lineSize[loc] == '&'){
+            lineSize[loc] = '\0';
+            //cout << "I am LOCA! " << loc<< endl;
+            break;
+        }
+    }
+    //cmdString[strlen(lineSize)-1]='\0';
+    int i = 0, num_arg = 0;
     
-    char* gonzales = strtok(NULL, "&");
-    if (gonzales != NULL ){
-        printf("smash error: > \"%s\"\n", cmdString);
-        return -1;
+    Command = strtok(lineSize, delimiters);
+    if (Command == NULL) return 0;
+    
+    args[0] = Command;
+    for (i=1; i<MAX_ARG; i++){
+        args[i] = strtok(NULL, delimiters);
+        if (args[i] != NULL)
+            num_arg++;
     }
     
-    
-    if (lineSize[strlen(lineSize)-2] == '&'){
-        lineSize[strlen(lineSize)-2] = '\0';
-        
-        char cmdString[MAX_LINE_SIZE];
-        strcpy(cmdString, lineSize);
-        cmdString[strlen(lineSize)-1]='\0';
-        int i = 0, num_arg = 0;
-        
-        Command = strtok(lineSize, delimiters);
-        if (Command == NULL) return 0;
-        
-        args[0] = Command;
-        for (i=1; i<MAX_ARG; i++){
-            args[i] = strtok(NULL, delimiters);
-            if (args[i] != NULL)
-                num_arg++;
-        }
-        int pID;
-            switch(pID = fork()){
-                case -1:
-                        // Add your code here (error)
-                    std::cerr << "smash error: > " << cmdString << std::endl;
-                    return -1;
+    int pID;
+        switch(pID = fork()){
+            case -1:
+                std::cerr << "smash error: > " << cmdString << std::endl;
+                return -1;
 
-                case 0 :
-                        // Child Process
-                    setpgrp();
-                    if (execvp(args[0], args) ==-1){  //???? when execvp happens it's like a bg cmd??
-                        cerr << "you used execvp from bgCMD but failed to exec" << cmdString << endl;
-                        if (kill(getpid(), SIGKILL) == -1){
-                            cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
-                            cerr << "CHECK!! sigKILL falied! " << endl;
-                            return -1;
-                        }
+            case 0 : // Child Process
+                setpgrp();
+                if (execvp(args[0], args) ==-1){
+                    //cerr << "you used execvp from bgCMD but failed to exec" << cmdString << endl;
+                    printf("smash error: > \"%s\"\n", cmdString);
+                    if (kill(getpid(), SIGKILL) == -1){
+                        cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
+                        cerr << "smash error: > kill" << args[2] << " – cannot send signal" << endl;
+                        return -1;
                     }
-                
-                default:
-                    Job jobBG(cmdString, pID, false);
-                    jobsVector.push_back(jobBG);
+                }
+            
+            default:
+                //cout << "I am LOCA! " << loc<< endl;
+                cmdString[loc] = '\0';
+                Job jobBG(cmdString, pID, false);
+                jobsVector.push_back(jobBG);
                 return 0;
-        }
     }
+    
     return -1;
 }
 

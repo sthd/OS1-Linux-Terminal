@@ -89,7 +89,7 @@ int main(int argc, char *argv[]){
             
         // background command
 	 	if(!BgCmd(lineSize)) continue;
-            cout << lineSize << "here" << endl;
+            
         // built in commands
 		ExeCmd(lineSize, cmdString);
             
