@@ -18,9 +18,9 @@ class Job{
         serial_ =jobCount++;
         time_=(time(NULL));
     }
-    ~Job(){
-        pid_ = -2;
-    };
+    //~Job(){
+    //    pid_ = -2;
+    //};
     int getSerial(){return serial_;}
 
     string getCommand(){return command_;}
@@ -29,9 +29,7 @@ class Job{
     
     time_t getTime_(){return time_;}
     
-    
     bool isStopped_(){ return stopped_;} //returns TRUE if job STOPPED
-    
     
     void setStopped_(bool setStatus){
         if (setStatus == true) stopped_=true; //set job as STOPPED!

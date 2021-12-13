@@ -1,5 +1,3 @@
-//		commands.c
-//********************************************
 #include "commands.h"
 #include "job.h"
 #include "includes.h"
@@ -12,45 +10,6 @@ extern string fg_cmd;
 extern vector<Job> jobsVector;
 extern Job* currentJob;
 
-
-string whichSignal(int signalNumber){
-    switch(signalNumber) {
-
-        case 1 : return "SIGHUP"    ;
-        case 2 : return "SIGINT"    ;
-        case 3 : return "SIGQUIT"   ;
-        case 4 : return "SIGILL"    ;
-        case 5 : return "SIGTRAP"   ;
-        case 6 : return "SIGABRT"   ;
-        case 7 : return "SIGBUS"    ;
-        case 8 : return "SIGFPE"    ;
-        case 9 : return "SIGKILL"   ;
-        case 10: return "SIGUSR1"   ;
-        case 11: return "SIGSEGV"   ;
-        case 12: return "SIGUSR2"   ;
-        case 13: return "SIGPIPE"   ;
-        case 14: return "SIGALRM"   ;
-        case 15: return "SIGTERM"   ;
-        case 16: return "SIGSTKFLT" ;
-        case 17: return "SIGCHLD"   ;
-        case 18: return "SIGCONT"   ;
-        case 19: return "SIGSTOP"   ;
-        case 20: return "SIGTSTP"   ;
-        case 21: return "SIGTTIN"   ;
-        case 22: return "SIGTTOU"   ;
-        case 23: return "SIGURG"    ;
-        case 24: return "SIGXCPU"   ;
-        case 25: return "SIGXFSZ"   ;
-        case 26: return "SIGVTALRM" ;
-        case 27: return "SIGPROF"   ;
-        case 28: return "SIGWINCH"  ;
-        case 29: return "SIGIO"     ;
-        case 30: return "SIGPWR"    ;
-        case 31: return "SIGSYS"    ;
-        default: return ""          ;
-            
-    }
-}
 
 char nextPwd[MAX_LINE_SIZE] ="";
 char oldPwd[MAX_LINE_SIZE] ="";
@@ -73,39 +32,23 @@ void modifyJobList(){
     int status;
 
     for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
-        //cout << "give me your pid" << it->getPid() << endl;
-        //cout << "parent pid" << it->getPid() << endl;
         if (it->isStopped_() == true)
             continue;
         wait = waitpid(it->getPid(), &status, WNOHANG | WUNTRACED); //  //it->getPid()
-        //cout << "Waitpid returns: " << wait << endl;
         if (wait == -1){
-            //cout << "entered wait == -1"<< endl;
             if (errno == ECHILD){
                 jobsVector.erase(it);
                 --it;
             }
-            //else
-            //    cerr << "wait during MODIFYJOBS has failed" << endl;
+            perror("smash error: > "); // ? ? ?
         }
         if (wait > 0){
-            //cout << "entered wait > 0"<< endl;
             if ( WIFEXITED(status) || WIFSIGNALED(status) ){
-                //cout <<"before erasing size is:" << jobsVector.size();
                 jobsVector.erase(it);
                 --it;
-                //cout <<"  and after it is: " << jobsVector.size() << endl;
-                //cout << "iteartor points now to: " << it->getPid() << endl;
             }
-            //else{
-            //    cout << "Process in modify has STOPPED!" << endl;
-            //}
         }
-        //else if (wait == 0){
-        //    cout << "Process in modify is run run run!" << endl;
-        //}
     }
-    //cout << "Finished modifyJobList" << endl;
 }
 
 Job* findJobSerial(int serial){
@@ -184,8 +127,8 @@ int ExeCmd(char* lineSize, char* cmdString){
         }
         if(!strcmp(args[1], dash)){  //enter if '-'
             if (strlen(oldPwd) == 0){
-                //cerr << "No such file or directory" << endl;
-                printf("smash error: > \"%s\"\n", cmdString); //?
+                cerr << "smash error: > There is no older path for cd - " << endl;
+                //printf("smash error: > \"%s\"\n", cmdString); //?
                 return 1;
             }
             else{
@@ -197,15 +140,26 @@ int ExeCmd(char* lineSize, char* cmdString){
         }
         char* buffCD=NULL;
         buffCD =getcwd(buffCD, 0);
+        if (buffCD == NULL){
+            perror("smash error: > ");
+            return 1;
+        }
+            
         strcpy(tmpPwd, buffCD); //tmpPwd <- current directory
         if(chdir(nextPwd) == -1){
-            cerr << "smash error: > \"" << nextPwd << "\" - No such file or directory" << endl;
+           // cerr << "smash error: > \"" << nextPwd << "\" - No such file or directory" << endl;
+            perror("smash error: > ");
             free(buffCD);
             return 1;
         }
         free(buffCD);
         char* buffAgain=NULL;
         buffAgain = getcwd(buffAgain, 0);
+        if (buffAgain == NULL){
+            perror("smash error: > ");
+            return 1;
+        }
+        
         if (!strcmp(args[1], dash))
             cout << buffAgain << endl;
         strcpy(oldPwd, tmpPwd); //enter last cwd into oldPwd
@@ -225,7 +179,7 @@ int ExeCmd(char* lineSize, char* cmdString){
         buffCWD = getcwd(buffCWD, 0);
         if (buffCWD == NULL){
             //cerr << "falied to retreive current working directory" << endl;
-            printf("smash error: > \"%s\"\n", cmdString);
+            perror("smash error: > ");
             return 1;
         }
         cout << buffCWD << endl;
@@ -271,7 +225,18 @@ int ExeCmd(char* lineSize, char* cmdString){
         }
         modifyJobList();
         if (num_arg == 1){
-            currentJob = findJobSerial(stoi(args[1]));
+            
+            int stringToInt;
+            try {
+                stringToInt =  stoi(args[1]);
+            }
+            catch (...) {
+                printf("smash error: > \"%s\"\n", cmdString);
+                return 1;
+            }
+            
+            
+            currentJob = findJobSerial(stringToInt);
             if (currentJob == NULL){
                 cerr << "smash error: > " << args[1] << " - job does not exist" << endl;
                 return 1;
@@ -294,7 +259,8 @@ int ExeCmd(char* lineSize, char* cmdString){
         
         if(currentJob->isStopped_() == true){
             if (kill(currentJob->getPid(), SIGCONT) == -1){
-                cerr << "smash error: > kill" << currentJob->getSerial() << " – cannot send signal" << endl;
+                //cerr << "smash error: > kill " << currentJob->getSerial() << " – cannot send signal" << endl;
+                perror("smash error: > ");
                 return 1;
             }
         }
@@ -304,7 +270,8 @@ int ExeCmd(char* lineSize, char* cmdString){
         cout << currentJob->getCommand() << endl;
         if (waitpid(fg_pid, NULL, WUNTRACED) ==-1){
             //assigned NULL for status so we can run
-             cerr << " @@@@@@@ waitpid for FG failed at fgcmd with: " << fg_pid << endl;
+            //cerr << " @@@@@@@ waitpid for FG failed at fgcmd with: " << fg_pid << endl;
+            perror("smash error: > ");
             return 1;
         }
         modifyJobList();
@@ -323,14 +290,24 @@ int ExeCmd(char* lineSize, char* cmdString){
         }
         modifyJobList();
         if (num_arg == 1){
-            currentJob = findJobSerial(stoi(args[1]));
+            
+            int stringToInt;
+            try {
+                stringToInt =  stoi(args[1]);
+            }
+            catch (...) {
+                printf("smash error: > \"%s\"\n", cmdString);
+                return 1;
+            }
+            
+            currentJob = findJobSerial(stringToInt);
             if (currentJob == NULL){
                 cerr << "smash error: > " << args[1] << " - job does not exist" << endl;
                 return 1;
             }
             if (currentJob->isStopped_() == false){
-                //cerr << "smash error: > " << args[1] << " job already runs in background" << endl;
-                printf("smash error: > \"%s\"\n", cmdString);
+                cerr << "smash error: > " << args[1] << " job already runs in background" << endl;
+                //printf("smash error: > \"%s\"\n", cmdString);
                 return 1;
             }
             // send kill to check if stopped
@@ -346,15 +323,15 @@ int ExeCmd(char* lineSize, char* cmdString){
                 }
             }
             if (currentJob==NULL){
-                //cerr << "smash error: > " << " no jobs that stopped in background" << endl;
-                printf("smash error: > \"%s\"\n", cmdString);
+                cerr << "smash error: > " << " no stopped jobs in the background" << endl;
+                //printf("smash error: > \"%s\"\n", cmdString);
                 return 1;
             }
         }
         
         if (kill(currentJob->getPid(), SIGCONT) == -1){
-            cerr << "smash error: > kill" << currentJob->getSerial() << " – cannot send signal" << endl;
-            //printf("smash error: > \"%s\"\n", cmdString);
+            //cerr << "smash error: > kill " << currentJob->getSerial() << " – cannot send signal" << endl;
+            perror("smash error: > ");
             return 1;
         }
         else{
@@ -378,10 +355,15 @@ int ExeCmd(char* lineSize, char* cmdString){
         if (num_arg ==1 && (!strcmp(args[1], "kill") ) ){
             
              for (std::vector<Job>::iterator it=jobsVector.begin(); it != jobsVector.end(); ++it){
-                 if (kill(it->getPid(), SIGTERM) == -1){
-                     cerr << "smash error: > kill" << it->getSerial() << " – cannot send signal" << endl;
-                     //printf("smash error: > \"%s\"\n", cmdString);
-                     return 1; //system call failed!
+                 // ? ? ?
+                 if (kill(it->getPid(), SIGTERM) == -1){ // ? ? ?
+                     if (errno == ESRCH){
+                         continue;
+                     }
+                     //cerr << "smash error: > kill " << it->getSerial() << " – cannot send signal" << endl;
+                     perror("smash error: > "); //system call failed!
+                     //return 1;
+                     exit(1);
                  }
                  cout << "[" << it->getSerial() << "] " << it->getCommand() << " - Sending SIGTERM... "; //flush?
                  int wait=0;
@@ -390,8 +372,10 @@ int ExeCmd(char* lineSize, char* cmdString){
                      
                      wait = waitpid(it->getPid(), NULL, WNOHANG);
                      if (wait < 0){
-                         cerr << "smash error: > wait for child failed" << endl;
-                         return 1; //? perhaps exit(1) ?
+                         //cerr << "smash error: > wait for child failed" << endl;
+                         perror("smash error: > ");
+                         //return 1; //? perhaps exit(1) ?
+                         exit(1);
                      }
                      if (wait > 0){
                          cout << "Done." <<endl;
@@ -403,13 +387,16 @@ int ExeCmd(char* lineSize, char* cmdString){
                  if (wait == 0){
                      
                      if (kill(it->getPid(), SIGKILL) == -1){
-                         cerr << "smash error: > kill" << it->getSerial() << " – cannot send signal" << endl;
-                         return 1; //system call failed!
+                         //cerr << "smash error: > kill " << it->getSerial() << " – cannot send signal" << endl;
+                         perror("smash error: > ");
+                         //return 1; //system call failed!
+                         exit(1);
                      }
                      cout << "(5 sec passed) Sending SIGKILL... Done." << endl;
                  }
 
              }
+            modifyJobList();
              exit(0);
         }
         //cerr << "Illegal KILL command!" << endl;
@@ -436,13 +423,32 @@ int ExeCmd(char* lineSize, char* cmdString){
             return 1;
         }
         modifyJobList();
-        Job* currentJob = findJobSerial(stoi(args[2]));
-        if (currentJob == NULL){
-            cerr << "smash error: > kill" << args[2] << " – job does not exist" << endl;
+        
+        int stringToInt;
+        try {
+            stringToInt =  stoi(args[2]);
+        }
+        catch (...) {
+            printf("smash error: > \"%s\"\n", cmdString);
             return 1;
         }
         
-        int killNum = stoi(args[1]);
+        Job* currentJob = findJobSerial(stringToInt);
+        if (currentJob == NULL){
+            cerr << "smash error: > kill " << args[2] << " – job does not exist" << endl;
+            return 1;
+        }
+
+                
+        int killNum;
+        try {
+                   killNum =  stoi(args[1]);
+               }
+               catch (...) {
+                   printf("smash error: > \"%s\"\n", cmdString);
+                   return 1;
+               }
+        
         if (killNum < 0)
             killNum = killNum*(-1);
         else {
@@ -456,8 +462,8 @@ int ExeCmd(char* lineSize, char* cmdString){
             return 1;
         }
         if (kill(currentJob->getPid(), killNum) == -1){
-            cerr << "smash error: > kill" << whichSignal(killNum) << " – cannot send signal" << endl;
-            cerr << "smash error: > kill" << args[2] << " – cannot send signal" << endl;
+            //cerr << "smash error: > kill " << whichSignal(killNum) << " – cannot send signal" << endl;
+            cerr << "smash error: > kill " << args[2] << " – cannot send signal" << endl;
             return 1;
         }
         if ( (killNum == SIGSTOP) || (killNum == SIGTSTP) ){
@@ -470,7 +476,6 @@ int ExeCmd(char* lineSize, char* cmdString){
             modifyJobList();
         }
         return 0;
-        
     }
     
     
@@ -481,56 +486,109 @@ int ExeCmd(char* lineSize, char* cmdString){
         
         file1 = open(args[1], O_RDONLY);
         if (file1 == -1){
-            cerr << "FILE1 ERROR: No such file or directory" << endl;
+            perror("smash error: > ");
+            //cerr << "FILE1 ERROR: No such file or directory" << endl;
             return 1;
         }
         file2 = open(args[2], O_RDONLY);
         if (file2 == -1){
+            perror("smash error: > ");
+            //cerr << "FILE2 ERROR: No such file or directory" << endl;
             if (close(file1) == -1){
-                cerr << "FILE1 ERROR: close file failed!" << endl;
+                perror("smash error: > ");
+                //cerr << "FILE1 ERROR: close file failed!" << endl;
             }
-            cerr << "FILE2 ERROR: No such file or directory" << endl;
             return 1;
         }
         
         char buff1 = 'a';
         char buff2 = 'a';
-
+        
         bytesRead1 = read(file1, &buff1, nbytes);
-        bytesRead2 = read(file2, &buff2, nbytes);
-
-        while(bytesRead1!=0 || bytesRead2!=0){
-            if(bytesRead1==-1 || bytesRead2==-1){
-                cerr << "Unable to read file" << endl;
-                if (close(file1) == -1 || close(file2) == -1  ){
-                    cerr << "FILE ERROR: close file failed!" << endl;
-                    return 1;
-                }
-            }
-            if (bytesRead1==0 || bytesRead2==0){
-                cout << "1" <<endl; //i.e. files are differnet
-                if (close(file1) == -1 || close(file2) == -1  ){
-                    cerr << "FILE ERROR: close file failed!" << endl;
-                    return 1;
-                }
-                return 0;
-            }
-            if (buff1!=buff2){// files were equal so far
-                cout << "1" <<endl; //i.e. files are differnet
-                if (close(file1) == -1 || close(file2) == -1  ){
-                    cerr << "FILE ERROR: close file failed!" << endl;
-                    return 1;
-                }
-                return 0;
-            }
-            bytesRead1 = read(file1, &buff1, nbytes);
-            bytesRead2 = read(file2, &buff2, nbytes);
-        }
-        cout << "0" <<endl; //i.e. files are identical
-        if (close(file1) == -1 || close(file2) == -1  ){
-            cerr << "FILE ERROR: close file failed!" << endl;
+        if(bytesRead1==-1){
+            perror("smash error: > ");
+            if (close(file1) == -1 )
+                perror("smash error: > ");
+            if (close(file2) == -1 )
+                perror("smash error: > ");
             return 1;
         }
+        bytesRead2 = read(file2, &buff2, nbytes);
+        if(bytesRead2==-1){
+            perror("smash error: > ");
+            if (close(file1) == -1 )
+                perror("smash error: > ");
+            if (close(file2) == -1 )
+                perror("smash error: > ");
+            return 1;
+        }
+        bool isLegal = true;
+        while(bytesRead1!=0 || bytesRead2!=0){
+            
+            if (bytesRead1==0 || bytesRead2==0){
+                cout << "1" <<endl; //i.e. files are differnet
+                if (close(file1) == -1 ){
+                    perror("smash error: > ");
+                    isLegal=false;
+                }
+                if (close(file2) == -1 ){
+                    perror("smash error: > ");
+                    isLegal=false;
+                }
+                if (isLegal == false)
+                    return 1;
+                else
+                    return 0;
+            }
+        
+            if (buff1!=buff2){// files were equal so far
+                cout << "1" <<endl; //i.e. files are differnet
+                if (close(file1) == -1 ){
+                    perror("smash error: > ");
+                    isLegal=false;
+                }
+                if (close(file2) == -1 ){
+                    perror("smash error: > ");
+                    isLegal=false;
+                }
+                if (isLegal == false)
+                    return 1;
+                else
+                    return 0;
+            }
+            
+            bytesRead1 = read(file1, &buff1, nbytes);
+            if(bytesRead1==-1){
+                perror("smash error: > ");
+                if (close(file1) == -1 )
+                    perror("smash error: > ");
+                if (close(file2) == -1 )
+                    perror("smash error: > ");
+                return 1;
+            }
+            bytesRead2 = read(file2, &buff2, nbytes);
+            if(bytesRead2==-1){
+                perror("smash error: > ");
+                if (close(file1) == -1 )
+                    perror("smash error: > ");
+                if (close(file2) == -1 )
+                    perror("smash error: > ");
+                return 1;
+            }
+        }
+        cout << "0" <<endl; //i.e. files are identical
+        
+        if (close(file1) == -1 ){
+            perror("smash error: > ");
+            isLegal=false;
+        }
+        if (close(file2) == -1 ){
+            perror("smash error: > ");
+            isLegal=false;
+        }
+        if (isLegal == false)
+            return 1;
+        return 0;
     }
     
 	else{ // external command
@@ -554,29 +612,30 @@ void ExeExternal(char *args[MAX_ARG], char* cmdString){
 	int pID;
     	switch(pID = fork()){
                 case -1:
-                printf("smash error: > \"%s\"\n", cmdString);
+                perror("smash error: > "); //fork failed
                 return;
                 
                 case 0 : //Child process enters here
-                setpgrp();
+                setpgrp(); // notice that wait is going to fail while using setpgrp
                 //cout << "I am SON with pid: " << pID << " and my fg is: " << fg_pid << endl;
                 if (execvp(args[0], args) ==-1){
                     //cerr << "you used execvp from ExeExternal but failed to exec" << cmdString << endl;
-                    printf("smash error: > \"%s\"\n", cmdString);
+                    perror("smash error: > ");
                     if (kill(getpid(), SIGKILL) == -1){
                         //cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
-                        cerr << "smash error: > kill SIGKILL" << " – cannot send signal" << endl; //SIGKILL = 9 
+                        //cerr << "smash error: > kill SIGKILL" << " – cannot send signal" << endl; //SIGKILL = 9
+                        perror("smash error: > ");
                     return;
                     }
                 }
-                return;
+                return; // will never be executed
                 
                 default:
                 fg_pid=pID;
                 fg_cmd=cmdString;
                 int status;
                 waitpid(pID, &status, WUNTRACED);
-
+                // this waitpid will wait for son to TERMINATE or STOP but will always return -1 as setpgrp is different
                 fg_pid=0;
                 fg_cmd = "smash";
                 return;
@@ -624,7 +683,11 @@ int BgCmd(char* lineSize){
     int i = 0, num_arg = 0;
     
     Command = strtok(lineSize, delimiters);
-    if (Command == NULL) return 0;
+    if (Command == NULL){
+        printf("smash error: > \"%s\"\n", cmdString);
+        return 0;
+    }
+
     
     args[0] = Command;
     for (i=1; i<MAX_ARG; i++){
@@ -636,17 +699,17 @@ int BgCmd(char* lineSize){
     int pID;
         switch(pID = fork()){
             case -1:
-                std::cerr << "smash error: > " << cmdString << std::endl;
+                perror("smash error: > ");
                 return -1;
 
             case 0 : // Child Process
                 setpgrp();
                 if (execvp(args[0], args) ==-1){
                     //cerr << "you used execvp from bgCMD but failed to exec" << cmdString << endl;
-                    printf("smash error: > \"%s\"\n", cmdString);
+                    perror("smash error: > ");
                     if (kill(getpid(), SIGKILL) == -1){
-                        cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
-                        cerr << "smash error: > kill" << args[2] << " – cannot send signal" << endl;
+                        //cerr << "I am a child, excecvp failed + can't commit suicide " << endl;
+                        perror("smash error: > ");
                         return -1;
                     }
                 }
@@ -656,6 +719,15 @@ int BgCmd(char* lineSize){
                 cmdString[loc] = '\0';
                 Job jobBG(cmdString, pID, false);
                 jobsVector.push_back(jobBG);
+                
+                char tmpy[MAX_LINE_SIZE]="";
+                strcpy(tmpy, cmdString); //strcpy(char[] , char*)
+                if (strcmp(tmpy, "history")){
+                    if (cmdHistory.size() == MAXHISTORY ){
+                        cmdHistory.pop_front();
+                    }
+                    cmdHistory.push_back(string(tmpy));
+                }
                 return 0;
     }
     

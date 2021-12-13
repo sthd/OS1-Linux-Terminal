@@ -13,15 +13,10 @@ main file. This file contains the main function of smash
 #include "signals.h"
 #include "job.h"
 
-//#include <string.h>
-
-
 #define MAX_LINE_SIZE 80
 #define MAXARGS 20
 
 
-//char* L_Fg_Cmd;
-//void* jobs = NULL; //This represents the list of jobs. Please change to a preferred type (e.g array of char*)
 char lineSize[MAX_LINE_SIZE];
 
 vector<Job> jobsVector;
@@ -55,13 +50,8 @@ int main(int argc, char *argv[]){
     //L_Fg_Cmd[0] = '\0';
 
     
-    //struct sigaction act;
-    //act.sa_handler = &catch_int;
-    //sigaction(SIGINT, &act, NULL);
     struct sigaction actTSTP;
     struct sigaction actINT;
-    
-
     
     sigemptyset (&actTSTP.sa_mask);
     actTSTP.sa_flags = 0;
@@ -75,7 +65,6 @@ int main(int argc, char *argv[]){
     sigaction(SIGINT, &actINT, NULL); //ctrlC
     char cmdString[MAX_LINE_SIZE]; 	   
 	
-
 	
     	while (1)
     	{
@@ -104,23 +93,3 @@ int main(int argc, char *argv[]){
     //free(L_Fg_Cmd);
     return 0;
 }
-
-
-
-
-
-
-
-//signal declaretions
-//NOTE: the signal handlers and the function/s that sets the handler should be found in siganls.c
- /* add your code here */
-
-/************************************/
-//NOTE: the signal handlers and the function/s that sets the handler should be found in siganls.c
-//set your signal handlers here
-/* add your code here */
-
-/************************************/
-
-/************************************/
-// Init globals

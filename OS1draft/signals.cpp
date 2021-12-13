@@ -1,10 +1,3 @@
-// signals.c
-// contains signal handler funtions
-// contains the function/s that set the signal handlers
-
-/*******************************************/
-/* Name: handler_cntlc
-   Synopsis: handle the Control-C */
 #include "signals.h"
 #include "job.h"
 #include "commands.h"
@@ -15,22 +8,17 @@ extern Job* currentJob;
 extern vector<Job> jobsVector;
 extern int Daddy;
 
-/*
-* ****CHECK when to modify - might be a problem with kill
-*/
 
 void ctrl_Z_handler(int i){
-    cout << "my real pid" << getpid() << " and fg is:" << fg_pid << endl;
-    //int killme = ;
     if (getpid() != Daddy) return;
-    //if (fg_pid <= 0)
-    //    return;
+    
     sigset_t mask_set;
     sigset_t old_set;
     sigfillset(&mask_set);
     sigprocmask(SIG_SETMASK, &mask_set, &old_set);
     if (kill(fg_pid, SIGTSTP) == -1){
-        cerr << "smash error: > kill " << fg_cmd << " – cannot send signal" << endl;
+        //cerr << "smash error: > kill " << fg_cmd << " – cannot send signal" << endl;
+        perror("smash error: > ");
         sigprocmask(SIG_SETMASK, &old_set, &mask_set);
         return;
     }
@@ -48,10 +36,6 @@ void ctrl_Z_handler(int i){
 }
 
 
-/*
- * ****CHECK when to modify - might be a problem with kill
- */
-
 void ctrl_C_handler(int i){
     if (fg_pid <= 0)
         return;
@@ -60,21 +44,13 @@ void ctrl_C_handler(int i){
     sigfillset(&mask_set);
     sigprocmask(SIG_SETMASK, &mask_set, &old_set);
     if (kill(fg_pid, SIGINT) == -1){
-        cerr << "smash error: > kill " << fg_cmd << " – cannot send signal" << endl;
+        //cerr << "smash error: > kill " << fg_cmd << " – cannot send signal" << endl;
+        perror("smash error: > ");
         sigprocmask(SIG_SETMASK, &old_set, &mask_set);
         return;
     }
     
     modifyJobList();
-    /*
-     currentJob=findJobPID(fg_pid);
-     if (currentJob != NULL){
-         //jobsVector.erase(currentJob);
-     }
-     else{
-         currentJob->setStopped_(true);
-     }
-     */
 
     sigprocmask(SIG_SETMASK, &old_set, &mask_set);
     return;
