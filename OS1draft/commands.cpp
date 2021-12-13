@@ -668,26 +668,29 @@ int BgCmd(char* lineSize){
     char *args[MAX_ARG];
     char cmdString[MAX_LINE_SIZE];
     strcpy(cmdString, lineSize);
+    cmdString[strlen(lineSize)-1]='\0';
+    
     long size = strlen(lineSize) -2;
     long loc;
-    for (loc=size; loc>0; loc--){
-        if ((lineSize[loc] != '&') && (lineSize[loc] !=' ' ) )
+    bool isBG=false;
+    for (loc=size; loc>=0; loc--){
+        if ( (lineSize[loc] != '&') && (lineSize[loc] !=' ' ) )
             return -1;
         else if (lineSize[loc] == '&'){
             lineSize[loc] = '\0';
+            isBG=true;
             //cout << "I am LOCA! " << loc<< endl;
             break;
         }
     }
     //cmdString[strlen(lineSize)-1]='\0';
     int i = 0, num_arg = 0;
-    
     Command = strtok(lineSize, delimiters);
     if (Command == NULL){
-        printf("smash error: > \"%s\"\n", cmdString);
+        if (isBG==true)
+            printf("smash error: > \"%s\"\n", cmdString);
         return 0;
     }
-
     
     args[0] = Command;
     for (i=1; i<MAX_ARG; i++){

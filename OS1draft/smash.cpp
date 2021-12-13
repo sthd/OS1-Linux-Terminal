@@ -66,8 +66,7 @@ int main(int argc, char *argv[]){
     char cmdString[MAX_LINE_SIZE]; 	   
 	
 	
-    	while (1)
-    	{
+    	while (1){
 	 	printf("smash > ");
 		fgets(lineSize, MAX_LINE_SIZE, stdin); //lineSize is our variable
 		strcpy(cmdString, lineSize);
